@@ -1,14 +1,59 @@
 import 'package:flutter/material.dart';
 
+import '../data/stock_realtime_quote_repository.dart';
+import '../models/stock_quote.dart';
 import '../models/stock_search_result.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
 
-// 관심 화면, 여기서는 내용물만
-class WatchlistScreen extends StatelessWidget {
+// 관심 화면
+// 시세는 관심 목록이 바뀔 때마다 한 번에 조회 -> StatefulWidget으로 관리
+class WatchlistScreen extends StatefulWidget {
   const WatchlistScreen({super.key, required this.favorites});
 
   final FavoritesController favorites;
+
+  @override
+  State<WatchlistScreen> createState() => _WatchlistScreenState();
+}
+
+class _WatchlistScreenState extends State<WatchlistScreen> {
+  final StockRealtimeQuoteRepository _quoteRepository = StockRealtimeQuoteRepository();
+  Map<String, StockQuote> _quotes = const <String, StockQuote>{};
+  Set<String> _lastFetchedSymbols = const <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.favorites.addListener(_onFavoritesChanged);
+    _onFavoritesChanged();
+  }
+
+  @override
+  void dispose() {
+    widget.favorites.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    final Set<String> symbols = widget.favorites.items.map((r) => r.symbol).toSet();
+    if (symbols.isEmpty) {
+      setState(() {
+        _quotes = const <String, StockQuote>{};
+        _lastFetchedSymbols = const <String>{};
+      });
+      return;
+    }
+    if (symbols == _lastFetchedSymbols) return; // 종목 구성 그대로면 다시 요청 안 함
+    _lastFetchedSymbols = symbols;
+    _loadQuotes(symbols.toList());
+  }
+
+  Future<void> _loadQuotes(List<String> symbols) async {
+    final Map<String, StockQuote> quotes = await _quoteRepository.fetch(symbols);
+    if (!mounted) return;
+    setState(() => _quotes = quotes);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +63,12 @@ class WatchlistScreen extends StatelessWidget {
         Expanded(
           // favorites 바뀔 때마다 목록만 다시 그림
           child: ListenableBuilder(
-            listenable: favorites,
+            listenable: widget.favorites,
             builder: (BuildContext context, Widget? _) {
-              final List<StockSearchResult> items = favorites.items;
+              final List<StockSearchResult> items = widget.favorites.items;
               return items.isEmpty
                   ? const _WatchlistEmptyState()
-                  : _WatchlistList(items: items);
+                  : _WatchlistList(items: items, quotes: _quotes);
             },
           ),
         ),
@@ -102,38 +147,44 @@ class _WatchlistHeader extends StatelessWidget {
 
 // 관심 종목 목록
 class _WatchlistList extends StatelessWidget {
-  const _WatchlistList({required this.items});
+  const _WatchlistList({required this.items, required this.quotes});
 
   final List<StockSearchResult> items;
+  final Map<String, StockQuote> quotes;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: items.length,
       itemBuilder: (BuildContext context, int index) {
-        return _WatchlistRow(result: items[index]);
+        final StockSearchResult result = items[index];
+        return _WatchlistRow(result: result, quote: quotes[result.symbol]);
       },
     );
   }
 }
 
 // 관심 종목 한 줄. 왼쪽은 이름/코드, 오른쪽은 시세
+// quote가 null이면 아직 시세를 못 받아온 상태
 class _WatchlistRow extends StatelessWidget {
-  const _WatchlistRow({required this.result});
+  const _WatchlistRow({required this.result, required this.quote});
 
   final StockSearchResult result;
+  final StockQuote? quote;
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
-    final _MockQuote quote = _mockQuoteFor(result.symbol);
+    final StockQuote? quote = this.quote;
 
-    final Color changeColor = quote.changeAmount > 0
-        ? colors.priceUpText
-        : quote.changeAmount < 0
-            ? colors.priceDownText
-            : colors.priceFlatText;
+    final Color changeColor = quote == null
+        ? colors.textTertiary
+        : quote.changeAmount > 0
+            ? colors.priceUpText
+            : quote.changeAmount < 0
+                ? colors.priceDownText
+                : colors.priceFlatText;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -182,7 +233,7 @@ class _WatchlistRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               Text(
-                _formatThousands(quote.currentPrice),
+                quote == null ? '-' : _formatThousands(quote.currentPrice),
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 15,
@@ -193,7 +244,9 @@ class _WatchlistRow extends StatelessWidget {
               ),
               SizedBox(height: dimens.space1),
               Text(
-                '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
+                quote == null
+                    ? '조회 중'
+                    : '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
                 style: TextStyle(
                   color: changeColor,
                   fontSize: 11,
@@ -255,29 +308,6 @@ class _WatchlistEmptyState extends StatelessWidget {
       ),
     );
   }
-}
-
-// TODO: 실시간 시세 API 연동
-// 목데이터로 현재가/등락을 채움, 목록에 없는 심볼은 등락 없음 으로 처리
-class _MockQuote {
-  const _MockQuote({required this.currentPrice, required this.previousClose});
-
-  final int currentPrice;
-  final int previousClose;
-
-  int get changeAmount => currentPrice - previousClose;
-  double get changeRate => previousClose == 0 ? 0 : changeAmount / previousClose;
-}
-
-const Map<String, _MockQuote> _mockQuotes = <String, _MockQuote>{
-  '005930': _MockQuote(currentPrice: 179700, previousClose: 180100), // 삼성전자
-  '000660': _MockQuote(currentPrice: 412500, previousClose: 403000), // SK하이닉스
-  '035720': _MockQuote(currentPrice: 61300, previousClose: 62100), // 카카오
-  '247540': _MockQuote(currentPrice: 195400, previousClose: 195400), // 에코프로비엠
-};
-
-_MockQuote _mockQuoteFor(String symbol) {
-  return _mockQuotes[symbol] ?? const _MockQuote(currentPrice: 0, previousClose: 0);
 }
 
 // 천 단위 콤마만 찍어주는 용도라 intl 패키지 없이 직접 구현
