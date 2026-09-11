@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/stock_autocomplete_repository.dart';
 import '../models/stock_search_result.dart';
 import '../theme/theme.dart';
+import '../utils/highlight_text.dart';
 
 // 검색 화면, 검색어가 바뀔 때마다 결과 목록을 들고 있어야 함 -> 서치바와 결과 리스트가 같은 상태를 공유
 class SearchScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  String _query = '';
   List<StockSearchResult> _results = const <StockSearchResult>[];
 
   @override
@@ -22,8 +24,11 @@ class _SearchScreenState extends State<SearchScreen> {
     return Column(
       children: <Widget>[
         _SearchBar(
-          onResultsChanged: (List<StockSearchResult> results) {
-            setState(() => _results = results);
+          onResultsChanged: (String query, List<StockSearchResult> results) {
+            setState(() {
+              _query = query;
+              _results = results;
+            });
           },
         ),
         Expanded(
@@ -31,7 +36,7 @@ class _SearchScreenState extends State<SearchScreen> {
           // TODO: 검색했는데 결과가 0건인 경우 개발 필요 -> 일단은 검색 전이랑 동일하게
           child: _results.isEmpty
               ? const _SearchEmptyState()
-              : _SearchResultList(results: _results),
+              : _SearchResultList(query: _query, results: _results),
         ),
       ],
     );
@@ -41,7 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
 class _SearchBar extends StatefulWidget {
   const _SearchBar({required this.onResultsChanged});
 
-  final ValueChanged<List<StockSearchResult>> onResultsChanged;
+  final void Function(String query, List<StockSearchResult> results) onResultsChanged;
 
   @override
   State<_SearchBar> createState() => _SearchBarState();
@@ -65,14 +70,14 @@ class _SearchBarState extends State<_SearchBar> {
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       final List<StockSearchResult> results = await _repository.search(query);
       if (!mounted) return;
-      widget.onResultsChanged(results);
+      widget.onResultsChanged(query, results);
     });
   }
 
   void _clear() {
     _debounce?.cancel();
     _controller.clear();
-    widget.onResultsChanged(const <StockSearchResult>[]);
+    widget.onResultsChanged('', const <StockSearchResult>[]);
     setState(() {}); // x 누른 직후 바로 반영
   }
 
@@ -147,8 +152,9 @@ class _SearchBarState extends State<_SearchBar> {
 
 // 검색 결과 목록
 class _SearchResultList extends StatelessWidget {
-  const _SearchResultList({required this.results});
+  const _SearchResultList({required this.query, required this.results});
 
+  final String query;
   final List<StockSearchResult> results;
 
   @override
@@ -156,7 +162,7 @@ class _SearchResultList extends StatelessWidget {
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (BuildContext context, int index) {
-        return _SearchResultRow(result: results[index]);
+        return _SearchResultRow(query: query, result: results[index]);
       },
     );
   }
@@ -164,14 +170,22 @@ class _SearchResultList extends StatelessWidget {
 
 // 검색 목록
 class _SearchResultRow extends StatelessWidget {
-  const _SearchResultRow({required this.result});
+  const _SearchResultRow({required this.query, required this.result});
 
+  final String query;
   final StockSearchResult result;
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
+    final TextStyle nameStyle = TextStyle(
+      color: colors.textPrimary,
+      fontSize: 15,
+      fontWeight: AppTypography.medium,
+      height: 20 / 15,
+      letterSpacing: -0.1,
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -192,14 +206,14 @@ class _SearchResultRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  result.name,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: AppTypography.medium,
-                    height: 20 / 15,
-                    letterSpacing: -0.1,
+                Text.rich(
+                  TextSpan(
+                    children: highlightedSpans(
+                      text: result.name,
+                      query: query,
+                      baseStyle: nameStyle,
+                      highlightColor: colors.searchHighlight,
+                    ),
                   ),
                 ),
                 SizedBox(height: dimens.space1),
