@@ -14,6 +14,9 @@ class WatchlistScreen extends StatelessWidget {
         child: Column(
           children: <Widget>[
             _WatchlistHeader(),
+            // TODO: 관심 종목 목록을 받아오면 분기
+            // 목록 없는 상태만 구현
+            Expanded(child: _WatchlistEmptyState()),
           ],
         ),
       ),
@@ -83,6 +86,53 @@ class _WatchlistHeader extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 관심 종목 없을 때
+class _WatchlistEmptyState extends StatelessWidget {
+  const _WatchlistEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            Icons.star_border,
+            size: 40, // 재사용되는 값이 아니라 토큰으로 안 빼고 리터럴로 둠
+            color: colors.textTertiary,
+          ),
+          SizedBox(height: dimens.space3),
+          Text(
+            '관심 종목이 없습니다',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 19,
+              fontWeight: AppTypography.bold,
+              height: 22 / 19,
+              letterSpacing: -0.2,
+            ),
+          ),
+          SizedBox(height: dimens.space3),
+          Text(
+            '검색 탭에서 종목을 찾아\n별 아이콘을 눌러 추가해 주세요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 11,
+              fontWeight: AppTypography.regular,
+              height: 14 / 11,
+              letterSpacing: 0,
+            ),
           ),
         ],
       ),
