@@ -17,13 +17,33 @@ class SearchScreen extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends StatefulWidget {
   const _SearchBar();
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose(); // 컨트롤러는 안 쓸 때 직접 정리해줘야 메모리 누수가 안 남
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
+    final TextStyle placeholderStyle = TextStyle(
+      color: colors.textTertiary,
+      fontSize: 15,
+      fontWeight: AppTypography.medium,
+      height: 20 / 15,
+      letterSpacing: -0.1,
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -55,22 +75,24 @@ class _SearchBar extends StatelessWidget {
             ),
             SizedBox(width: dimens.space2),
             Expanded(
-              child: Text(
-                '종목명 또는 종목코드',
-                style: TextStyle(
-                  color: colors.textTertiary,
-                  fontSize: 15,
-                  fontWeight: AppTypography.medium,
-                  height: 20 / 15,
-                  letterSpacing: -0.1,
+              child: TextField(
+                controller: _controller,
+                style: placeholderStyle,
+                cursorColor: colors.accentDefault,
+                decoration: InputDecoration.collapsed(
+                  hintText: '종목명 또는 종목코드',
+                  hintStyle: placeholderStyle,
                 ),
               ),
             ),
             SizedBox(width: dimens.space2),
-            Icon(
-              Icons.close,
-              size: dimens.iconSm,
-              color: colors.textTertiary,
+            GestureDetector(
+              onTap: () => setState(_controller.clear),
+              child: Icon(
+                Icons.close,
+                size: dimens.iconSm,
+                color: colors.textTertiary,
+              ),
             ),
           ],
         ),
