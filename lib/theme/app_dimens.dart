@@ -17,6 +17,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
     required this.radiusSm,
     required this.radiusMd,
     required this.radiusLg,
+    required this.radiusXl,
     required this.borderHairline,
     required this.iconSm,
     required this.iconMd,
@@ -35,6 +36,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
         radiusSm = 4,
         radiusMd = 8,
         radiusLg = 12,
+        radiusXl = 16, // 정렬 바텀시트
         borderHairline = 1,
         iconSm = 16,
         iconMd = 20,
@@ -52,6 +54,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
   final double radiusSm;
   final double radiusMd;
   final double radiusLg;
+  final double radiusXl;
 
   final double borderHairline;
 
@@ -76,6 +79,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
     double? radiusSm,
     double? radiusMd,
     double? radiusLg,
+    double? radiusXl,
     double? borderHairline,
     double? iconSm,
     double? iconMd,
@@ -93,6 +97,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
       radiusSm: radiusSm ?? this.radiusSm,
       radiusMd: radiusMd ?? this.radiusMd,
       radiusLg: radiusLg ?? this.radiusLg,
+      radiusXl: radiusXl ?? this.radiusXl,
       borderHairline: borderHairline ?? this.borderHairline,
       iconSm: iconSm ?? this.iconSm,
       iconMd: iconMd ?? this.iconMd,
@@ -115,6 +120,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
       radiusSm: lerpDouble(radiusSm, other.radiusSm, t)!,
       radiusMd: lerpDouble(radiusMd, other.radiusMd, t)!,
       radiusLg: lerpDouble(radiusLg, other.radiusLg, t)!,
+      radiusXl: lerpDouble(radiusXl, other.radiusXl, t)!,
       borderHairline: lerpDouble(borderHairline, other.borderHairline, t)!,
       iconSm: lerpDouble(iconSm, other.iconSm, t)!,
       iconMd: lerpDouble(iconMd, other.iconMd, t)!,

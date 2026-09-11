@@ -19,6 +19,7 @@ abstract final class AppPalette {
   static const Color neutral100 = Color(0xFFD6D4CB);
   static const Color neutral50 = Color(0xFFEAE8E0);
   static const Color neutral0 = Color(0xFFFAF9F5);
+  static const Color textFafafa = Color(0xFFFAFAFA); // 정렬 체크 표시
 
   // red — 국내 시장 관행상 상승을 의미합니다.
   static const Color red600 = Color(0xFFD93B44);

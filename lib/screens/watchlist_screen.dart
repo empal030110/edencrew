@@ -120,24 +120,32 @@ class _WatchlistHeader extends StatelessWidget {
           ),
           Row(
             children: <Widget>[
-              Text(
-                '가나다순',
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: AppTypography.bold,
-                  height: 18 / 13,
-                  letterSpacing: 0,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Image.asset(
-                  'assets/icons/sort_arrow.png',
-                  width: dimens.iconMd,
-                  height: dimens.iconMd,
-                  color: colors.textSecondary,
-                  colorBlendMode: BlendMode.srcIn,
+              GestureDetector(
+                onTap: () => _showSortSheet(context),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      '가나다순',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: AppTypography.bold,
+                        height: 18 / 13,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Image.asset(
+                        'assets/icons/sort_arrow.png',
+                        width: dimens.iconMd,
+                        height: dimens.iconMd,
+                        color: colors.textSecondary,
+                        colorBlendMode: BlendMode.srcIn,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(width: dimens.space4),
@@ -154,6 +162,130 @@ class _WatchlistHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+void _showSortSheet(BuildContext context) {
+  final AppDimens dimens = context.dimens;
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: context.colors.surfaceOverlay,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(dimens.radiusXl),
+        topRight: Radius.circular(dimens.radiusXl),
+      ),
+    ),
+    builder: (BuildContext context) => const _SortSheet(),
+  );
+}
+
+// 정렬 옵션 3개. TODO: 실제로 목록에 적용하는 기능은 나중에
+enum _SortOption { byPrice, byChangeRate, byName }
+
+// 정렬 바텀시트. 지금은 UI만 -> 탭하면 체크 표시만 바뀌고 실제 정렬 반영은 안 함
+class _SortSheet extends StatefulWidget {
+  const _SortSheet();
+
+  @override
+  State<_SortSheet> createState() => _SortSheetState();
+}
+
+class _SortSheetState extends State<_SortSheet> {
+  _SortOption _selected = _SortOption.byName; // 기본 정렬
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 34), // 토큰에 없는 값
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 21, horizontal: dimens.space6),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '정렬',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 19,
+                  fontWeight: AppTypography.bold,
+                  height: 22 / 19,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+          ),
+          _SortOptionRow(
+            label: '현재가순',
+            selected: _selected == _SortOption.byPrice,
+            onTap: () => setState(() => _selected = _SortOption.byPrice),
+          ),
+          _SortOptionRow(
+            label: '등락률순',
+            selected: _selected == _SortOption.byChangeRate,
+            onTap: () => setState(() => _selected = _SortOption.byChangeRate),
+          ),
+          _SortOptionRow(
+            label: '가나다순',
+            selected: _selected == _SortOption.byName,
+            onTap: () => setState(() => _selected = _SortOption.byName),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SortOptionRow extends StatelessWidget {
+  const _SortOptionRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+    final Color color = selected ? colors.textPrimary : colors.textSecondary;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 18, horizontal: dimens.space6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontWeight: AppTypography.medium,
+                height: 20 / 15,
+                letterSpacing: -0.1,
+              ),
+            ),
+            if (selected)
+              Icon(
+                Icons.check,
+                size: dimens.space6, // 24px. 기존 space6(24)이랑 값이 같아서 그대로 재사용
+                color: colors.textFafafa,
+              ),
+          ],
+        ),
       ),
     );
   }
