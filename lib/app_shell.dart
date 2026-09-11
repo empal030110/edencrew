@@ -32,7 +32,7 @@ class _AppShellState extends State<AppShell> {
         child: IndexedStack(
           index: _selectedIndex,
           children: <Widget>[
-            const WatchlistScreen(),
+            WatchlistScreen(favorites: _favorites),
             SearchScreen(favorites: _favorites),
           ],
         ),
