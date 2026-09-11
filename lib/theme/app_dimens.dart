@@ -38,7 +38,7 @@ class AppDimens extends ThemeExtension<AppDimens> {
         borderHairline = 1,
         iconSm = 16,
         iconMd = 20,
-        iconLg = 22, // 하단 탭바 아이콘(관심/검색) 크기
+        iconLg = 22, // 22px 아이콘
         rowMinHeight = 56,
         tabBarHeight = 56;
 

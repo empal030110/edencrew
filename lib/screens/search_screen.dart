@@ -3,25 +3,45 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../data/stock_autocomplete_repository.dart';
+import '../models/stock_search_result.dart';
 import '../theme/theme.dart';
 
-// 검색 화면, 여기서는 내용물만
-class SearchScreen extends StatelessWidget {
+// 검색 화면, 검색어가 바뀔 때마다 결과 목록을 들고 있어야 함 -> 서치바와 결과 리스트가 같은 상태를 공유
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  List<StockSearchResult> _results = const <StockSearchResult>[];
+
+  @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: <Widget>[
-        _SearchBar(),
-        Expanded(child: _SearchEmptyState()),
+        _SearchBar(
+          onResultsChanged: (List<StockSearchResult> results) {
+            setState(() => _results = results);
+          },
+        ),
+        Expanded(
+          // 검색 전이면 안내 문구, 결과 있으면 목록
+          // TODO: 검색했는데 결과가 0건인 경우 개발 필요 -> 일단은 검색 전이랑 동일하게
+          child: _results.isEmpty
+              ? const _SearchEmptyState()
+              : _SearchResultList(results: _results),
+        ),
       ],
     );
   }
 }
 
 class _SearchBar extends StatefulWidget {
-  const _SearchBar();
+  const _SearchBar({required this.onResultsChanged});
+
+  final ValueChanged<List<StockSearchResult>> onResultsChanged;
 
   @override
   State<_SearchBar> createState() => _SearchBarState();
@@ -39,14 +59,21 @@ class _SearchBarState extends State<_SearchBar> {
     super.dispose();
   }
 
-  // TODO: 결과 리스트 UI 구현 후 삭제
   // 300ms debounce
   void _onQueryChanged(String query) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () async {
-      final results = await _repository.search(query);
-      debugPrint('검색 결과 (${results.length}건): $results');
+      final List<StockSearchResult> results = await _repository.search(query);
+      if (!mounted) return;
+      widget.onResultsChanged(results);
     });
+  }
+
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    widget.onResultsChanged(const <StockSearchResult>[]);
+    setState(() {}); // x 누른 직후 바로 반영
   }
 
   @override
@@ -104,7 +131,7 @@ class _SearchBarState extends State<_SearchBar> {
             ),
             SizedBox(width: dimens.space2),
             GestureDetector(
-              onTap: () => setState(_controller.clear),
+              onTap: _clear,
               child: Icon(
                 Icons.close,
                 size: dimens.iconSm,
@@ -113,6 +140,88 @@ class _SearchBarState extends State<_SearchBar> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// 검색 결과 목록
+class _SearchResultList extends StatelessWidget {
+  const _SearchResultList({required this.results});
+
+  final List<StockSearchResult> results;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _SearchResultRow(result: results[index]);
+      },
+    );
+  }
+}
+
+// 검색 목록
+class _SearchResultRow extends StatelessWidget {
+  const _SearchResultRow({required this.result});
+
+  final StockSearchResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: dimens.space3,
+        horizontal: dimens.space4,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: colors.borderSubtle,
+            width: dimens.borderHairline,
+          ),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  result.name,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 15,
+                    fontWeight: AppTypography.medium,
+                    height: 20 / 15,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                SizedBox(height: dimens.space1),
+                Text(
+                  '${result.symbol} · ${result.market}',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: AppTypography.regular,
+                    height: 14 / 11,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.star_border,
+            size: dimens.iconLg,
+            color: colors.favoriteInactive,
+          ),
+        ],
       ),
     );
   }
