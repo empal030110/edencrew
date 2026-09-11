@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../data/stock_autocomplete_repository.dart';
 import '../theme/theme.dart';
 
 // 검색 화면, 여기서는 내용물만
@@ -26,11 +29,24 @@ class _SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<_SearchBar> {
   final TextEditingController _controller = TextEditingController();
+  final StockAutocompleteRepository _repository = StockAutocompleteRepository();
+  Timer? _debounce;
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose(); // 컨트롤러는 안 쓸 때 직접 정리해줘야 메모리 누수가 안 남
     super.dispose();
+  }
+
+  // TODO: 결과 리스트 UI 구현 후 삭제
+  // 300ms debounce
+  void _onQueryChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final results = await _repository.search(query);
+      debugPrint('검색 결과 (${results.length}건): $results');
+    });
   }
 
   @override
@@ -77,6 +93,7 @@ class _SearchBarState extends State<_SearchBar> {
             Expanded(
               child: TextField(
                 controller: _controller,
+                onChanged: _onQueryChanged,
                 style: placeholderStyle.copyWith(color: colors.textPrimary),
                 cursorColor: colors.accentDefault,
                 decoration: InputDecoration.collapsed(
