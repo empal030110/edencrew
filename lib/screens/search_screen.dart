@@ -77,7 +77,7 @@ class _SearchBarState extends State<_SearchBar> {
             Expanded(
               child: TextField(
                 controller: _controller,
-                style: placeholderStyle,
+                style: placeholderStyle.copyWith(color: colors.textPrimary),
                 cursorColor: colors.accentDefault,
                 decoration: InputDecoration.collapsed(
                   hintText: '종목명 또는 종목코드',
