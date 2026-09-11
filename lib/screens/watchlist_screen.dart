@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
+import '../widgets/app_bottom_nav_bar.dart';
 
 // 관심 화면
 class WatchlistScreen extends StatelessWidget {
@@ -16,6 +17,7 @@ class WatchlistScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 }
