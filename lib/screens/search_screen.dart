@@ -200,7 +200,7 @@ class _SearchResultRow extends StatelessWidget {
   void _toggleFavorite(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
-    final bool isNowFavorite = favorites.toggle(result);
+    final bool isNowFavorite = favorites.toggle(result.id);
 
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar(); // 연속으로 누를 때 토스트가 쌓이지 않게 이전 토스트 제거

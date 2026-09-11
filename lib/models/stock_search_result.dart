@@ -22,3 +22,9 @@ class StockSearchResult {
   @override
   String toString() => '$name($symbol, $market)';
 }
+
+// canonical id(domestic:{symbol})에서 symbol만 뽑아냄
+String symbolFromCanonicalId(String id) {
+  const String prefix = 'domestic:';
+  return id.startsWith(prefix) ? id.substring(prefix.length) : id;
+}

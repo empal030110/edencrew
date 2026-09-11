@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 
+import '../data/stock_metadata_repository.dart';
 import '../data/stock_realtime_quote_repository.dart';
 import '../models/stock_quote.dart';
 import '../models/stock_search_result.dart';
@@ -7,7 +9,7 @@ import '../state/favorites_controller.dart';
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
 
 // 관심 화면
-// 시세는 관심 목록이 바뀔 때마다 한 번에 조회 -> StatefulWidget으로 관리
+// 이름/거래소(메타데이터)랑 시세는 관심 목록이 바뀔 때마다 한 번에 조회 -> StatefulWidget으로 관리
 class WatchlistScreen extends StatefulWidget {
   const WatchlistScreen({super.key, required this.favorites});
 
@@ -18,9 +20,11 @@ class WatchlistScreen extends StatefulWidget {
 }
 
 class _WatchlistScreenState extends State<WatchlistScreen> {
+  final StockMetadataRepository _metadataRepository = StockMetadataRepository();
   final StockRealtimeQuoteRepository _quoteRepository = StockRealtimeQuoteRepository();
+  Map<String, StockSearchResult> _metadata = const <String, StockSearchResult>{};
   Map<String, StockQuote> _quotes = const <String, StockQuote>{};
-  Set<String> _lastFetchedSymbols = const <String>{};
+  Set<String> _lastFetchedIds = const <String>{};
 
   @override
   void initState() {
@@ -36,17 +40,26 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   }
 
   void _onFavoritesChanged() {
-    final Set<String> symbols = widget.favorites.items.map((r) => r.symbol).toSet();
-    if (symbols.isEmpty) {
+    final Set<String> ids = widget.favorites.ids;
+    if (ids.isEmpty) {
       setState(() {
+        _metadata = const <String, StockSearchResult>{};
         _quotes = const <String, StockQuote>{};
-        _lastFetchedSymbols = const <String>{};
+        _lastFetchedIds = const <String>{};
       });
       return;
     }
-    if (symbols == _lastFetchedSymbols) return; // 종목 구성 그대로면 다시 요청 안 함
-    _lastFetchedSymbols = symbols;
-    _loadQuotes(symbols.toList());
+    if (setEquals(ids, _lastFetchedIds)) return; // 종목 구성 그대로면 다시 요청 안 함
+    _lastFetchedIds = ids;
+    final List<String> symbols = ids.map(symbolFromCanonicalId).toList();
+    _loadMetadata(symbols);
+    _loadQuotes(symbols);
+  }
+
+  Future<void> _loadMetadata(List<String> symbols) async {
+    final Map<String, StockSearchResult> metadata = await _metadataRepository.fetchAll(symbols);
+    if (!mounted) return;
+    setState(() => _metadata = metadata);
   }
 
   Future<void> _loadQuotes(List<String> symbols) async {
@@ -65,10 +78,11 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
           child: ListenableBuilder(
             listenable: widget.favorites,
             builder: (BuildContext context, Widget? _) {
-              final List<StockSearchResult> items = widget.favorites.items;
-              return items.isEmpty
+              final List<String> symbols =
+                  widget.favorites.ids.map(symbolFromCanonicalId).toList();
+              return symbols.isEmpty
                   ? const _WatchlistEmptyState()
-                  : _WatchlistList(items: items, quotes: _quotes);
+                  : _WatchlistList(symbols: symbols, metadata: _metadata, quotes: _quotes);
             },
           ),
         ),
@@ -147,42 +161,53 @@ class _WatchlistHeader extends StatelessWidget {
 
 // 관심 종목 목록
 class _WatchlistList extends StatelessWidget {
-  const _WatchlistList({required this.items, required this.quotes});
+  const _WatchlistList({
+    required this.symbols,
+    required this.metadata,
+    required this.quotes,
+  });
 
-  final List<StockSearchResult> items;
+  final List<String> symbols;
+  final Map<String, StockSearchResult> metadata;
   final Map<String, StockQuote> quotes;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: items.length,
+      itemCount: symbols.length,
       itemBuilder: (BuildContext context, int index) {
-        final StockSearchResult result = items[index];
-        return _WatchlistRow(result: result, quote: quotes[result.symbol]);
+        final String symbol = symbols[index];
+        return _WatchlistRow(
+          symbol: symbol,
+          metadata: metadata[symbol],
+          quote: quotes[symbol],
+        );
       },
     );
   }
 }
 
 // 관심 종목 한 줄. 왼쪽은 이름/코드, 오른쪽은 시세
-// quote가 null이면 아직 시세를 못 받아온 상태
+// metadata/quote가 null이면 아직 그 API 응답이 안 온 상태
 class _WatchlistRow extends StatelessWidget {
-  const _WatchlistRow({required this.result, required this.quote});
+  const _WatchlistRow({required this.symbol, required this.metadata, required this.quote});
 
-  final StockSearchResult result;
+  final String symbol;
+  final StockSearchResult? metadata;
   final StockQuote? quote;
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
-    final StockQuote? quote = this.quote;
+    final String name = metadata?.name ?? symbol; // 메타데이터 오기 전엔 심볼로 대신 표시
+    final String market = metadata?.market ?? '-';
 
     final Color changeColor = quote == null
         ? colors.textTertiary
-        : quote.changeAmount > 0
+        : quote!.changeAmount > 0
             ? colors.priceUpText
-            : quote.changeAmount < 0
+            : quote!.changeAmount < 0
                 ? colors.priceDownText
                 : colors.priceFlatText;
 
@@ -206,7 +231,7 @@ class _WatchlistRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  result.name,
+                  name,
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: 15,
@@ -217,7 +242,7 @@ class _WatchlistRow extends StatelessWidget {
                 ),
                 SizedBox(height: dimens.space1),
                 Text(
-                  '${result.symbol} · ${result.market}',
+                  '$symbol · $market',
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: 11,
@@ -233,7 +258,7 @@ class _WatchlistRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               Text(
-                quote == null ? '-' : _formatThousands(quote.currentPrice),
+                quote == null ? '-' : _formatThousands(quote!.currentPrice),
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 15,
@@ -246,7 +271,7 @@ class _WatchlistRow extends StatelessWidget {
               Text(
                 quote == null
                     ? '조회 중'
-                    : '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
+                    : '${_formatChangeAmount(quote!.changeAmount)} (${_formatChangeRate(quote!.changeRate)})',
                 style: TextStyle(
                   color: changeColor,
                   fontSize: 11,
