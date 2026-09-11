@@ -7,6 +7,13 @@ import '../models/stock_quote.dart';
 import '../models/stock_search_result.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
+import '../utils/watchlist_sort.dart';
+
+const Map<WatchlistSortOption, String> _sortOptionLabels = <WatchlistSortOption, String>{
+  WatchlistSortOption.byPrice: '현재가순',
+  WatchlistSortOption.byChangeRate: '등락률순',
+  WatchlistSortOption.byName: '가나다순',
+};
 
 // 관심 화면
 // 이름/거래소(메타데이터)랑 시세는 관심 목록이 바뀔 때마다 한 번에 조회 -> StatefulWidget으로 관리
@@ -25,6 +32,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   Map<String, StockSearchResult> _metadata = const <String, StockSearchResult>{};
   Map<String, StockQuote> _quotes = const <String, StockQuote>{};
   Set<String> _lastFetchedIds = const <String>{};
+  WatchlistSortOption _sortOption = WatchlistSortOption.byName;
 
   @override
   void initState() {
@@ -68,11 +76,31 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     setState(() => _quotes = quotes);
   }
 
+  Future<void> _showSortSheet() async {
+    final AppDimens dimens = context.dimens;
+    final WatchlistSortOption? picked = await showModalBottomSheet<WatchlistSortOption>(
+      context: context,
+      backgroundColor: context.colors.surfaceOverlay,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(dimens.radiusXl),
+          topRight: Radius.circular(dimens.radiusXl),
+        ),
+      ),
+      builder: (BuildContext context) => _SortSheet(selected: _sortOption),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _sortOption = picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const _WatchlistHeader(),
+        _WatchlistHeader(
+          sortOption: _sortOption,
+          onTapSort: _showSortSheet,
+        ),
         Expanded(
           // favorites 바뀔 때마다 목록만 다시 그림
           child: ListenableBuilder(
@@ -80,9 +108,10 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
             builder: (BuildContext context, Widget? _) {
               final List<String> symbols =
                   widget.favorites.ids.map(symbolFromCanonicalId).toList();
-              return symbols.isEmpty
-                  ? const _WatchlistEmptyState()
-                  : _WatchlistList(symbols: symbols, metadata: _metadata, quotes: _quotes);
+              if (symbols.isEmpty) return const _WatchlistEmptyState();
+              final List<String> sorted =
+                  sortWatchlistSymbols(symbols, _sortOption, _metadata, _quotes);
+              return _WatchlistList(symbols: sorted, metadata: _metadata, quotes: _quotes);
             },
           ),
         ),
@@ -93,7 +122,10 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
 // 언더스코어(_)로 시작하는 클래스는 이 파일 안에서만 쓰는 private 위젯이라는 뜻
 class _WatchlistHeader extends StatelessWidget {
-  const _WatchlistHeader();
+  const _WatchlistHeader({required this.sortOption, required this.onTapSort});
+
+  final WatchlistSortOption sortOption;
+  final VoidCallback onTapSort;
 
   @override
   Widget build(BuildContext context) {
@@ -121,12 +153,12 @@ class _WatchlistHeader extends StatelessWidget {
           Row(
             children: <Widget>[
               GestureDetector(
-                onTap: () => _showSortSheet(context),
+                onTap: onTapSort,
                 behavior: HitTestBehavior.opaque,
                 child: Row(
                   children: <Widget>[
                     Text(
-                      '가나다순',
+                      _sortOptionLabels[sortOption]!,
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: 13,
@@ -167,34 +199,11 @@ class _WatchlistHeader extends StatelessWidget {
   }
 }
 
-void _showSortSheet(BuildContext context) {
-  final AppDimens dimens = context.dimens;
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: context.colors.surfaceOverlay,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(dimens.radiusXl),
-        topRight: Radius.circular(dimens.radiusXl),
-      ),
-    ),
-    builder: (BuildContext context) => const _SortSheet(),
-  );
-}
+// 정렬 바텀시트, 옵션 고르면 그 값 들고 바로 닫힘 (Navigator.pop으로 값 전달)
+class _SortSheet extends StatelessWidget {
+  const _SortSheet({required this.selected});
 
-// 정렬 옵션 3개. TODO: 실제로 목록에 적용하는 기능은 나중에
-enum _SortOption { byPrice, byChangeRate, byName }
-
-// 정렬 바텀시트. 지금은 UI만 -> 탭하면 체크 표시만 바뀌고 실제 정렬 반영은 안 함
-class _SortSheet extends StatefulWidget {
-  const _SortSheet();
-
-  @override
-  State<_SortSheet> createState() => _SortSheetState();
-}
-
-class _SortSheetState extends State<_SortSheet> {
-  _SortOption _selected = _SortOption.byName; // 기본 정렬
+  final WatchlistSortOption selected;
 
   @override
   Widget build(BuildContext context) {
@@ -202,12 +211,12 @@ class _SortSheetState extends State<_SortSheet> {
     final AppDimens dimens = context.dimens;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 34), // 토큰에 없는 값
+      padding: const EdgeInsets.only(bottom: 34), // 토큰에 없는 값
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 21, horizontal: dimens.space6),
+            padding: EdgeInsets.symmetric(vertical: 21, horizontal: dimens.space6), // 토큰에 없는 값
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -222,21 +231,12 @@ class _SortSheetState extends State<_SortSheet> {
               ),
             ),
           ),
-          _SortOptionRow(
-            label: '현재가순',
-            selected: _selected == _SortOption.byPrice,
-            onTap: () => setState(() => _selected = _SortOption.byPrice),
-          ),
-          _SortOptionRow(
-            label: '등락률순',
-            selected: _selected == _SortOption.byChangeRate,
-            onTap: () => setState(() => _selected = _SortOption.byChangeRate),
-          ),
-          _SortOptionRow(
-            label: '가나다순',
-            selected: _selected == _SortOption.byName,
-            onTap: () => setState(() => _selected = _SortOption.byName),
-          ),
+          for (final WatchlistSortOption option in WatchlistSortOption.values)
+            _SortOptionRow(
+              label: _sortOptionLabels[option]!,
+              selected: option == selected,
+              onTap: () => Navigator.of(context).pop(option),
+            ),
         ],
       ),
     );
@@ -264,7 +264,7 @@ class _SortOptionRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 18, horizontal: dimens.space6),
+        padding: EdgeInsets.symmetric(vertical: 18, horizontal: dimens.space6), // 토큰에 없는 값
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -281,7 +281,7 @@ class _SortOptionRow extends StatelessWidget {
             if (selected)
               Icon(
                 Icons.check,
-                size: dimens.space6, // 24px. 기존 space6(24)이랑 값이 같아서 그대로 재사용
+                size: dimens.space6,
                 color: colors.textFafafa,
               ),
           ],
