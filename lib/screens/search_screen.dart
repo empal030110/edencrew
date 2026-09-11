@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../data/stock_autocomplete_repository.dart';
 import '../models/stock_search_result.dart';
+import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
 import '../utils/highlight_text.dart';
 
 // 검색 화면, 검색어가 바뀔 때마다 결과 목록을 들고 있어야 함 -> 서치바와 결과 리스트가 같은 상태를 공유
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, required this.favorites});
+
+  final FavoritesController favorites;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -36,7 +39,11 @@ class _SearchScreenState extends State<SearchScreen> {
           // TODO: 검색했는데 결과가 0건인 경우 개발 필요 -> 일단은 검색 전이랑 동일하게
           child: _results.isEmpty
               ? const _SearchEmptyState()
-              : _SearchResultList(query: _query, results: _results),
+              : _SearchResultList(
+                  query: _query,
+                  results: _results,
+                  favorites: widget.favorites,
+                ),
         ),
       ],
     );
@@ -152,17 +159,26 @@ class _SearchBarState extends State<_SearchBar> {
 
 // 검색 결과 목록
 class _SearchResultList extends StatelessWidget {
-  const _SearchResultList({required this.query, required this.results});
+  const _SearchResultList({
+    required this.query,
+    required this.results,
+    required this.favorites,
+  });
 
   final String query;
   final List<StockSearchResult> results;
+  final FavoritesController favorites;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (BuildContext context, int index) {
-        return _SearchResultRow(query: query, result: results[index]);
+        return _SearchResultRow(
+          query: query,
+          result: results[index],
+          favorites: favorites,
+        );
       },
     );
   }
@@ -170,10 +186,69 @@ class _SearchResultList extends StatelessWidget {
 
 // 검색 목록
 class _SearchResultRow extends StatelessWidget {
-  const _SearchResultRow({required this.query, required this.result});
+  const _SearchResultRow({
+    required this.query,
+    required this.result,
+    required this.favorites,
+  });
 
   final String query;
   final StockSearchResult result;
+  final FavoritesController favorites;
+
+  void _toggleFavorite(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+    final bool isNowFavorite = favorites.toggle(result.id);
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar(); // 연속으로 누를 때 토스트가 쌓이지 않게 이전 토스트 제거
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.surfaceOverlay,
+        // 기본 margin(하단 10px)이 아니라 하단 네브바에서 12px 위로 오도록 직접 지정
+        margin: EdgeInsets.fromLTRB(
+          dimens.space4,
+          dimens.space1,
+          dimens.space4,
+          dimens.space3,
+        ),
+        padding: EdgeInsets.symmetric(
+          vertical: 14, // 토큰에 없는 값이라 리터럴
+          horizontal: dimens.space4,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(dimens.radiusLg),
+          side: BorderSide(
+            color: colors.borderSubtle,
+            width: dimens.borderHairline,
+          ),
+        ),
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              isNowFavorite ? Icons.star : Icons.star_border,
+              size: 18, // 토큰에 없는 값이라 리터럴
+              color: isNowFavorite ? colors.favoriteActive : colors.textSecondary,
+            ),
+            SizedBox(width: dimens.space2),
+            Text(
+              isNowFavorite ? '관심이 등록되었습니다' : '관심이 해제되었습니다',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 13,
+                fontWeight: AppTypography.bold,
+                height: 18 / 13,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -230,10 +305,20 @@ class _SearchResultRow extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.star_border,
-            size: dimens.iconLg,
-            color: colors.favoriteInactive,
+          // favorites가 바뀔 때마다 별 색만 다시 그리면 됨 —> 여기만 ListenableBuilder로 감쌈
+          ListenableBuilder(
+            listenable: favorites,
+            builder: (BuildContext context, Widget? _) {
+              final bool isFavorite = favorites.isFavorite(result.id);
+              return GestureDetector(
+                onTap: () => _toggleFavorite(context),
+                child: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  size: dimens.iconLg,
+                  color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
+                ),
+              );
+            },
           ),
         ],
       ),
