@@ -34,18 +34,19 @@ class _SearchScreenState extends State<SearchScreen> {
             });
           },
         ),
-        Expanded(
-          // 검색 전이면 안내 문구, 결과 있으면 목록
-          // TODO: 검색했는데 결과가 0건인 경우 개발 필요 -> 일단은 검색 전이랑 동일하게
-          child: _results.isEmpty
-              ? const _SearchEmptyState()
-              : _SearchResultList(
-                  query: _query,
-                  results: _results,
-                  favorites: widget.favorites,
-                ),
-        ),
+        Expanded(child: _buildBody()),
       ],
+    );
+  }
+
+  // 검색 전 / 결과 있음 / 검색했는데 결과 없음, 세 가지로 나뉨
+  Widget _buildBody() {
+    if (_query.trim().isEmpty) return const _SearchEmptyState();
+    if (_results.isEmpty) return _SearchNoResultsState(query: _query);
+    return _SearchResultList(
+      query: _query,
+      results: _results,
+      favorites: widget.favorites,
     );
   }
 }
@@ -319,6 +320,57 @@ class _SearchResultRow extends StatelessWidget {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 검색했는데 결과가 하나도 없을 때
+class _SearchNoResultsState extends StatelessWidget {
+  const _SearchNoResultsState({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Image.asset(
+            'assets/icons/ico_search_empty.png',
+            width: 40, // 재사용 안 하는 값 -> 리터럴
+            height: 40,
+            color: colors.textTertiary,
+            colorBlendMode: BlendMode.srcIn,
+          ),
+          SizedBox(height: dimens.space3),
+          Text(
+            '검색 결과가 없습니다',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 19,
+              fontWeight: AppTypography.bold,
+              height: 22 / 19,
+              letterSpacing: -0.2,
+            ),
+          ),
+          SizedBox(height: dimens.space3),
+          Text(
+            "'$query'와\n일치하는 검색 결과를 찾지 못했습니다.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textTertiary,
+              fontSize: 11,
+              fontWeight: AppTypography.regular,
+              height: 14 / 11,
+              letterSpacing: 0,
+            ),
           ),
         ],
       ),
