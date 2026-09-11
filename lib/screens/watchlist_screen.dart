@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
-import '../widgets/app_bottom_nav_bar.dart';
 
-// 관심 화면
+// 관심 화면, 여기서는 내용물만
 class WatchlistScreen extends StatelessWidget {
   const WatchlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold( // Scaffold: 화면 한 장의 기본 뼈대(배경, 앱바, 바디 등을 담는 틀)
-      body: SafeArea( // SafeArea: 노치/상태바 등 시스템 영역을 피해서 내용을 배치
-        child: Column(
-          children: <Widget>[
-            _WatchlistHeader(),
-            // TODO: 관심 종목 목록을 받아오면 분기
-            // 목록 없는 상태만 구현
-            Expanded(child: _WatchlistEmptyState()),
-          ],
-        ),
-      ),
-      bottomNavigationBar: AppBottomNavBar(),
+    return const Column(
+      children: <Widget>[
+        _WatchlistHeader(),
+        // TODO: 관심 종목 목록을 받아오면 분기
+        // 목록 없는 상태만 구현
+        Expanded(child: _WatchlistEmptyState()),
+      ],
     );
   }
 }

@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../theme/theme.dart';
 
-// 하단 탭바
-class AppBottomNavBar extends StatefulWidget {
-  const AppBottomNavBar({super.key});
+// 하단 탭바, 어떤 탭이 선택됐는지 직접 들고 있지 않음
+// AppShell에서 내려받음 —> 탭바가 화면 전환까지 같이 제어
+class AppBottomNavBar extends StatelessWidget {
+  const AppBottomNavBar({
+    super.key,
+    required this.selectedIndex, // 0: 관심, 1: 검색
+    required this.onTap,
+  });
 
-  @override
-  State<AppBottomNavBar> createState() => _AppBottomNavBarState();
-}
-
-class _AppBottomNavBarState extends State<AppBottomNavBar> {
-  int _selectedIndex = 0; // 0: 관심, 1: 검색
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -35,18 +36,18 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
           children: <Widget>[
             Expanded(
               child: _NavItem(
-                icon: _selectedIndex == 0 ? Icons.star : Icons.star_border,
+                icon: selectedIndex == 0 ? Icons.star : Icons.star_border,
                 label: '관심',
-                active: _selectedIndex == 0,
-                onTap: () => setState(() => _selectedIndex = 0),
+                active: selectedIndex == 0,
+                onTap: () => onTap(0),
               ),
             ),
             Expanded(
               child: _NavItem(
                 icon: Icons.search,
                 label: '검색',
-                active: _selectedIndex == 1,
-                onTap: () => setState(() => _selectedIndex = 1),
+                active: selectedIndex == 1,
+                onTap: () => onTap(1),
               ),
             ),
           ],
@@ -60,9 +61,9 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
 // (탭 상태 자체는 부모인 _AppBottomNavBarState가 들고 있고, 여기는 받은 값만 그림)
 class _NavItem extends StatelessWidget {
   const _NavItem({
-    required this.icon, // 그릴 아이콘 (예: Icons.star)
-    required this.label, // 아이콘 밑에 쓸 글자 (예: '관심')
-    required this.active, // 지금 선택된 탭인지 여부
+    required this.icon,
+    required this.label,
+    required this.active,
     required this.onTap, // 탭 눌렀을 때 실행할 콜백 함수
   });
 
