@@ -71,6 +71,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
               ),
             ),
           ),
+          if (quote != null) _StatsSection(quote: quote),
         ],
       ),
     );
@@ -237,3 +238,103 @@ class _PriceSection extends StatelessWidget {
     );
   }
 }
+
+// 시가/고가/저가 + 거래량/시가총액
+class _StatsSection extends StatelessWidget {
+  const _StatsSection({required this.quote});
+
+  final StockQuote quote;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppDimens dimens = context.dimens;
+
+    return Padding(
+      padding: EdgeInsets.all(dimens.space4),
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(child: _StatCard(title: '시가', value: formatThousands(quote.open))),
+              SizedBox(width: dimens.space2),
+              Expanded(child: _StatCard(title: '고가', value: formatThousands(quote.high))),
+              SizedBox(width: dimens.space2),
+              Expanded(child: _StatCard(title: '저가', value: formatThousands(quote.low))),
+            ],
+          ),
+          SizedBox(height: dimens.space2),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _StatCard(
+                  title: '거래량',
+                  value: _formatThousandUnit(quote.accumulatedVolume),
+                ),
+              ),
+              SizedBox(width: dimens.space2),
+              Expanded(
+                child: _StatCard(
+                  title: '시가총액',
+                  value: _formatTrillionUnit(quote.marketCap),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10), // 토큰에 없는 값
+      decoration: BoxDecoration(
+        color: colors.surfaceSunken,
+        borderRadius: BorderRadius.circular(dimens.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 11,
+              fontWeight: AppTypography.regular,
+              height: 14 / 11,
+              letterSpacing: 0,
+            ),
+          ),
+          SizedBox(height: dimens.space1),
+          Text(
+            value,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 15,
+              fontWeight: AppTypography.medium,
+              height: 20 / 15,
+              letterSpacing: -0.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 거래량은 "29,113천" 형태
+String _formatThousandUnit(int value) => '${formatThousands((value / 1000).round())}천';
+
+// 시가총액은 "1,063조" 형태
+String _formatTrillionUnit(int value) => '${formatThousands((value / 1000000000000).round())}조';
