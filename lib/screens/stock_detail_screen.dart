@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
+import '../utils/favorite_toast.dart';
 
 // 종목 상세 화면
 class StockDetailScreen extends StatelessWidget {
@@ -113,15 +114,20 @@ class _DetailHeader extends StatelessWidget {
               ],
             ),
           ),
-          // 관심 등록 상태만 반영
           ListenableBuilder(
             listenable: favorites,
             builder: (BuildContext context, Widget? _) {
               final bool isFavorite = favorites.isFavorite(id);
-              return Icon(
-                isFavorite ? Icons.star : Icons.star_border,
-                size: dimens.iconLg,
-                color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
+              return GestureDetector(
+                onTap: () {
+                  final bool isNowFavorite = favorites.toggle(id);
+                  showFavoriteToast(context, isFavorite: isNowFavorite);
+                },
+                child: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  size: dimens.iconLg,
+                  color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
+                ),
               );
             },
           ),
