@@ -88,15 +88,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                       changeRate: quote.changeRate,
                     ),
                   _PeriodTabs(selected: _period, onSelected: _onPeriodSelected),
-                  SizedBox(
-                    height: 300, // 차트 자리, 실제 차트 만들면 이 높이 기준으로 그리면 됨
-                    child: Center(
-                      child: Text(
-                        '${widget.name} 상세 페이지 (차트는 나중에)',
-                        style: TextStyle(color: colors.textPrimary, fontSize: 15),
-                      ),
-                    ),
-                  ),
+                  if (_dailyQuotes.isNotEmpty) _CandleChart(quotes: _dailyQuotes),
                   if (quote != null) _StatsSection(quote: quote),
                   if (_dailyQuotes.isNotEmpty) _DailyQuoteSection(quotes: _dailyQuotes),
                 ],
@@ -267,6 +259,106 @@ class _PriceSection extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// 캔들 차트, quotes는 최신순으로 옴 -> 오래된 날짜가 왼쪽에 오도록 그림
+class _CandleChart extends StatelessWidget {
+  const _CandleChart({required this.quotes});
+
+  final List<DailyQuote> quotes;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: dimens.space4,
+        horizontal: dimens.space4,
+      ),
+      child: SizedBox(
+        height: 220, // 차트 높이, 토큰에 없는 값이라 리터럴
+        width: double.infinity,
+        child: CustomPaint(
+          painter: _CandleChartPainter(
+            quotes: quotes.reversed.toList(),
+            upColor: colors.chartLineUp,
+            downColor: colors.chartLineDown,
+            flatColor: colors.chartLineFlat,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CandleChartPainter extends CustomPainter {
+  _CandleChartPainter({
+    required this.quotes,
+    required this.upColor,
+    required this.downColor,
+    required this.flatColor,
+  });
+
+  final List<DailyQuote> quotes;
+  final Color upColor;
+  final Color downColor;
+  final Color flatColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (quotes.isEmpty) return;
+
+    int high = quotes.first.highPrice;
+    int low = quotes.first.lowPrice;
+    for (final DailyQuote quote in quotes) {
+      if (quote.highPrice > high) high = quote.highPrice;
+      if (quote.lowPrice < low) low = quote.lowPrice;
+    }
+    final double range = (high - low).toDouble();
+    if (range == 0) return; // 기간 내내 가격 변동이 아예 없으면 그릴 게 없음
+
+    final double slotWidth = size.width / quotes.length;
+    final double candleWidth = slotWidth * 0.6; // 캔들 사이 간격
+
+    double yFor(int price) => size.height - (price - low) / range * size.height;
+
+    for (int i = 0; i < quotes.length; i++) {
+      final DailyQuote quote = quotes[i];
+      final double centerX = slotWidth * i + slotWidth / 2;
+      // 그날 시가 대비 종가가 아니라 전일 대비(changeAmount)로 판단해야
+      // 일별 시세 표/상단 등락이랑 색이 일치함
+      final Color color = quote.changeAmount > 0
+          ? upColor
+          : quote.changeAmount < 0
+              ? downColor
+              : flatColor;
+      final Paint paint = Paint()..color = color;
+
+      // 꼬리(고가 ~ 저가)
+      canvas.drawLine(
+        Offset(centerX, yFor(quote.highPrice)),
+        Offset(centerX, yFor(quote.lowPrice)),
+        paint..strokeWidth = 1,
+      );
+
+      // 몸통(시가 ~ 종가), 시가==종가여도 최소 1px은 보이게 clamp
+      final double openY = yFor(quote.openPrice);
+      final double closeY = yFor(quote.closePrice);
+      final double top = openY < closeY ? openY : closeY;
+      final double bottom = openY < closeY ? closeY : openY;
+      canvas.drawRect(
+        Rect.fromLTWH(centerX - candleWidth / 2, top, candleWidth, (bottom - top).clamp(1, double.infinity)),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CandleChartPainter oldDelegate) {
+    return oldDelegate.quotes != quotes;
   }
 }
 
