@@ -371,7 +371,7 @@ class _WatchlistRow extends StatelessWidget {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (BuildContext context) =>
-              StockDetailScreen(symbol: symbol, name: name),
+              StockDetailScreen(symbol: symbol, name: name, market: market),
         ),
       ),
       child: Container(
