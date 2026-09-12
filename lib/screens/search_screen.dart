@@ -7,6 +7,7 @@ import '../models/stock_search_result.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
 import '../utils/highlight_text.dart';
+import 'stock_detail_screen.dart';
 
 // 검색 화면, 검색어가 바뀔 때마다 결과 목록을 들고 있어야 함 -> 서치바와 결과 리스트가 같은 상태를 공유
 class SearchScreen extends StatefulWidget {
@@ -263,65 +264,73 @@ class _SearchResultRow extends StatelessWidget {
       letterSpacing: -0.1,
     );
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: dimens.space3,
-        horizontal: dimens.space4,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: colors.borderSubtle,
-            width: dimens.borderHairline,
-          ),
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) =>
+              StockDetailScreen(symbol: result.symbol, name: result.name),
         ),
       ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text.rich(
-                  TextSpan(
-                    children: highlightedSpans(
-                      text: result.name,
-                      query: query,
-                      baseStyle: nameStyle,
-                      highlightColor: colors.searchHighlight,
-                    ),
-                  ),
-                ),
-                SizedBox(height: dimens.space1),
-                Text(
-                  '${result.symbol} · ${result.market}',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: AppTypography.regular,
-                    height: 14 / 11,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: dimens.space3,
+          horizontal: dimens.space4,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: colors.borderSubtle,
+              width: dimens.borderHairline,
             ),
           ),
-          // favorites가 바뀔 때마다 별 색만 다시 그리면 됨 —> 여기만 ListenableBuilder로 감쌈
-          ListenableBuilder(
-            listenable: favorites,
-            builder: (BuildContext context, Widget? _) {
-              final bool isFavorite = favorites.isFavorite(result.id);
-              return GestureDetector(
-                onTap: () => _toggleFavorite(context),
-                child: Icon(
-                  isFavorite ? Icons.star : Icons.star_border,
-                  size: dimens.iconLg,
-                  color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
-                ),
-              );
-            },
-          ),
-        ],
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text.rich(
+                    TextSpan(
+                      children: highlightedSpans(
+                        text: result.name,
+                        query: query,
+                        baseStyle: nameStyle,
+                        highlightColor: colors.searchHighlight,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: dimens.space1),
+                  Text(
+                    '${result.symbol} · ${result.market}',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: AppTypography.regular,
+                      height: 14 / 11,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // favorites가 바뀔 때마다 별 색만 다시 그리면 됨 —> 여기만 ListenableBuilder로 감쌈
+            ListenableBuilder(
+              listenable: favorites,
+              builder: (BuildContext context, Widget? _) {
+                final bool isFavorite = favorites.isFavorite(result.id);
+                return GestureDetector(
+                  onTap: () => _toggleFavorite(context),
+                  child: Icon(
+                    isFavorite ? Icons.star : Icons.star_border,
+                    size: dimens.iconLg,
+                    color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
