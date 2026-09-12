@@ -138,10 +138,12 @@ class _DetailHeader extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             behavior: HitTestBehavior.opaque,
-            child: Icon(
-              Icons.arrow_back,
-              size: dimens.iconMd,
+            child: Image.asset(
+              'assets/icons/ico_back.png',
+              width: dimens.iconMd,
+              height: dimens.iconMd,
               color: colors.textSecondary,
+              colorBlendMode: BlendMode.srcIn,
             ),
           ),
           SizedBox(width: dimens.space2),
