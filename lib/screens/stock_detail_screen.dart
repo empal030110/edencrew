@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../data/stock_realtime_quote_repository.dart';
+import '../models/stock_quote.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
 import '../utils/favorite_toast.dart';
 import '../utils/number_format.dart';
 
 // 종목 상세 화면
-class StockDetailScreen extends StatelessWidget {
+class StockDetailScreen extends StatefulWidget {
   const StockDetailScreen({
     super.key,
     required this.symbol,
@@ -21,20 +23,50 @@ class StockDetailScreen extends StatelessWidget {
   final FavoritesController favorites;
 
   @override
+  State<StockDetailScreen> createState() => _StockDetailScreenState();
+}
+
+class _StockDetailScreenState extends State<StockDetailScreen> {
+  final StockRealtimeQuoteRepository _quoteRepository = StockRealtimeQuoteRepository();
+  StockQuote? _quote;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuote();
+  }
+
+  Future<void> _loadQuote() async {
+    final Map<String, StockQuote> quotes = await _quoteRepository.fetch(<String>[widget.symbol]);
+    if (!mounted) return;
+    setState(() => _quote = quotes[widget.symbol]);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
+    final StockQuote? quote = _quote;
 
     return Scaffold(
       backgroundColor: colors.surfaceBase,
       body: Column(
         children: <Widget>[
-          _DetailHeader(symbol: symbol, name: name, market: market, favorites: favorites),
-          // TODO: 하드코딩 -> 실시간 시세 API 연동하기
-          const _PriceSection(currentPrice: 179700, changeAmount: -400, changeRate: -0.0022),
+          _DetailHeader(
+            symbol: widget.symbol,
+            name: widget.name,
+            market: widget.market,
+            favorites: widget.favorites,
+          ),
+          if (quote != null)
+            _PriceSection(
+              currentPrice: quote.currentPrice,
+              changeAmount: quote.changeAmount,
+              changeRate: quote.changeRate,
+            ),
           Expanded(
             child: Center(
               child: Text(
-                '$name 상세 페이지 (차트는 나중에)',
+                '${widget.name} 상세 페이지 (차트는 나중에)',
                 style: TextStyle(color: colors.textPrimary, fontSize: 15),
               ),
             ),
