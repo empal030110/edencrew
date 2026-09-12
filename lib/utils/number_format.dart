@@ -9,3 +9,8 @@ String formatThousands(int value) {
   }
   return (isNegative ? '-' : '') + buffer.toString();
 }
+
+// 양수엔 +, 음수엔 -, 0엔 부호 x
+String formatSignedThousands(int value) {
+  return value > 0 ? '+${formatThousands(value)}' : formatThousands(value);
+}

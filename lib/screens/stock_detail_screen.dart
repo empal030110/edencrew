@@ -72,6 +72,8 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
             ),
           ),
           if (quote != null) _StatsSection(quote: quote),
+          // TODO: 하드코딩 3줄 -> 일별 시세 API 연동하기
+          const _DailyQuoteSection(),
         ],
       ),
     );
@@ -338,3 +340,151 @@ String _formatThousandUnit(int value) => '${formatThousands((value / 1000).round
 
 // 시가총액은 "1,063조" 형태
 String _formatTrillionUnit(int value) => '${formatThousands((value / 1000000000000).round())}조';
+
+// 일별 시세
+class _DailyQuote {
+  const _DailyQuote({
+    required this.date,
+    required this.closePrice,
+    required this.changeAmount,
+    required this.volume,
+  });
+
+  final String date;
+  final int closePrice;
+  final int changeAmount;
+  final int volume;
+}
+
+// TODO: 하드코딩 -> 일별 시세 API 연동하면 지우기
+const List<_DailyQuote> _mockDailyQuotes = <_DailyQuote>[
+  _DailyQuote(date: '03.27', closePrice: 179700, changeAmount: -400, volume: 29113466),
+  _DailyQuote(date: '03.26', closePrice: 180100, changeAmount: 1200, volume: 32074131),
+  _DailyQuote(date: '03.25', closePrice: 178900, changeAmount: 0, volume: 27441209),
+];
+
+// 일별 시세 표
+class _DailyQuoteSection extends StatelessWidget {
+  const _DailyQuoteSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        dimens.space4,
+        dimens.space6,
+        dimens.space4,
+        22,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '일별 시세',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 13,
+              fontWeight: AppTypography.bold,
+              height: 18 / 13,
+              letterSpacing: 0,
+            ),
+          ),
+          SizedBox(height: dimens.space1),
+          const _DailyQuoteHeaderRow(),
+          for (final _DailyQuote quote in _mockDailyQuotes) _DailyQuoteRow(quote: quote),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyQuoteHeaderRow extends StatelessWidget {
+  const _DailyQuoteHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final TextStyle style = TextStyle(
+      color: colors.textSecondary,
+      fontSize: 11,
+      fontWeight: AppTypography.regular,
+      height: 14 / 11,
+      letterSpacing: 0,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: Text('날짜', style: style)),
+          Expanded(child: Text('종가', textAlign: TextAlign.right, style: style)),
+          Expanded(child: Text('등락', textAlign: TextAlign.right, style: style)),
+          Expanded(child: Text('거래량', textAlign: TextAlign.right, style: style)),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyQuoteRow extends StatelessWidget {
+  const _DailyQuoteRow({required this.quote});
+
+  final _DailyQuote quote;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+    final Color changeColor = quote.changeAmount > 0
+        ? colors.priceUpText
+        : quote.changeAmount < 0
+            ? colors.priceDownText
+            : colors.priceFlatText;
+
+    TextStyle cellStyle(Color color) => TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: AppTypography.regular,
+          height: 14 / 11,
+          letterSpacing: 0,
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colors.borderSubtle, width: dimens.borderHairline),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: Text(quote.date, style: cellStyle(colors.textSecondary))),
+          Expanded(
+            child: Text(
+              formatThousands(quote.closePrice),
+              textAlign: TextAlign.right,
+              style: cellStyle(colors.textPrimary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              formatSignedThousands(quote.changeAmount),
+              textAlign: TextAlign.right,
+              style: cellStyle(changeColor),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              formatThousands(quote.volume),
+              textAlign: TextAlign.right,
+              style: cellStyle(colors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

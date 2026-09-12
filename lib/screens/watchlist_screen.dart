@@ -443,7 +443,7 @@ class _WatchlistRow extends StatelessWidget {
                       ),
                       SizedBox(height: dimens.space1),
                       Text(
-                        '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
+                        '${formatSignedThousands(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
                         style: TextStyle(
                           color: changeColor,
                           fontSize: 11,
@@ -527,10 +527,6 @@ class _WatchlistEmptyState extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatChangeAmount(int amount) {
-  return amount > 0 ? '+${formatThousands(amount)}' : formatThousands(amount);
 }
 
 String _formatChangeRate(double rate) {
