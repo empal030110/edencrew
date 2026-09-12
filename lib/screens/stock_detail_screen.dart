@@ -33,6 +33,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   final DailyQuoteRepository _dailyQuoteRepository = DailyQuoteRepository();
   StockQuote? _quote;
   List<DailyQuote> _dailyQuotes = const <DailyQuote>[];
+  _Period _period = _Period.oneMonth; // 기본 1개월
 
   @override
   void initState() {
@@ -48,10 +49,16 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   }
 
   Future<void> _loadDailyQuotes() async {
-    // 우선 1개월치(약 20거래일)만. 기간 탭이 생기면 필요한 거래일 수만큼 늘리면 됨
-    final List<DailyQuote> quotes = await _dailyQuoteRepository.fetchDays(widget.symbol, 20);
+    final int days = _periodTradingDays[_period]!;
+    final List<DailyQuote> quotes = await _dailyQuoteRepository.fetchDays(widget.symbol, days);
     if (!mounted) return;
     setState(() => _dailyQuotes = quotes);
+  }
+
+  void _onPeriodSelected(_Period period) {
+    if (period == _period) return;
+    setState(() => _period = period);
+    _loadDailyQuotes();
   }
 
   @override
@@ -80,7 +87,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                       changeAmount: quote.changeAmount,
                       changeRate: quote.changeRate,
                     ),
-                  const _PeriodTabs(),
+                  _PeriodTabs(selected: _period, onSelected: _onPeriodSelected),
                   SizedBox(
                     height: 300, // 차트 자리, 실제 차트 만들면 이 높이 기준으로 그리면 됨
                     child: Center(
@@ -263,7 +270,7 @@ class _PriceSection extends StatelessWidget {
   }
 }
 
-// 기간 탭. 지금은 UI만 -> 탭 누르면 선택 표시만 바뀌고 실제 기간별 데이터 조회는 안 함
+// 기간 탭. 선택 상태는 상위(_StockDetailScreenState)가 들고 있음 -> 탭이 바뀌면 일별 시세를 그 기간만큼 다시 조회해야 해서
 enum _Period { oneMonth, threeMonths, sixMonths, oneYear }
 
 const Map<_Period, String> _periodLabels = <_Period, String>{
@@ -273,15 +280,19 @@ const Map<_Period, String> _periodLabels = <_Period, String>{
   _Period.oneYear: '1년',
 };
 
-class _PeriodTabs extends StatefulWidget {
-  const _PeriodTabs();
+// 기간별 거래일 수
+const Map<_Period, int> _periodTradingDays = <_Period, int>{
+  _Period.oneMonth: 20,
+  _Period.threeMonths: 60,
+  _Period.sixMonths: 120,
+  _Period.oneYear: 245,
+};
 
-  @override
-  State<_PeriodTabs> createState() => _PeriodTabsState();
-}
+class _PeriodTabs extends StatelessWidget {
+  const _PeriodTabs({required this.selected, required this.onSelected});
 
-class _PeriodTabsState extends State<_PeriodTabs> {
-  _Period _selected = _Period.oneMonth;
+  final _Period selected;
+  final ValueChanged<_Period> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -296,8 +307,8 @@ class _PeriodTabsState extends State<_PeriodTabs> {
             Expanded(
               child: _PeriodTab(
                 label: _periodLabels[period]!,
-                selected: period == _selected,
-                onTap: () => setState(() => _selected = period),
+                selected: period == selected,
+                onTap: () => onSelected(period),
               ),
             ),
             if (period != _Period.values.last) SizedBox(width: dimens.space1),
