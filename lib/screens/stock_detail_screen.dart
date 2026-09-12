@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../data/daily_quote_repository.dart';
 import '../data/stock_realtime_quote_repository.dart';
+import '../models/daily_quote.dart';
 import '../models/stock_quote.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
@@ -28,18 +30,28 @@ class StockDetailScreen extends StatefulWidget {
 
 class _StockDetailScreenState extends State<StockDetailScreen> {
   final StockRealtimeQuoteRepository _quoteRepository = StockRealtimeQuoteRepository();
+  final DailyQuoteRepository _dailyQuoteRepository = DailyQuoteRepository();
   StockQuote? _quote;
+  List<DailyQuote> _dailyQuotes = const <DailyQuote>[];
 
   @override
   void initState() {
     super.initState();
     _loadQuote();
+    _loadDailyQuotes();
   }
 
   Future<void> _loadQuote() async {
     final Map<String, StockQuote> quotes = await _quoteRepository.fetch(<String>[widget.symbol]);
     if (!mounted) return;
     setState(() => _quote = quotes[widget.symbol]);
+  }
+
+  Future<void> _loadDailyQuotes() async {
+    // 우선 1개월치(약 20거래일)만. 기간 탭이 생기면 필요한 거래일 수만큼 늘리면 됨
+    final List<DailyQuote> quotes = await _dailyQuoteRepository.fetchDays(widget.symbol, 20);
+    if (!mounted) return;
+    setState(() => _dailyQuotes = quotes);
   }
 
   @override
@@ -57,23 +69,32 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
             market: widget.market,
             favorites: widget.favorites,
           ),
-          if (quote != null)
-            _PriceSection(
-              currentPrice: quote.currentPrice,
-              changeAmount: quote.changeAmount,
-              changeRate: quote.changeRate,
-            ),
+          // 헤더는 고정, 그 아래만 스크롤
           Expanded(
-            child: Center(
-              child: Text(
-                '${widget.name} 상세 페이지 (차트는 나중에)',
-                style: TextStyle(color: colors.textPrimary, fontSize: 15),
+            child: SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  if (quote != null)
+                    _PriceSection(
+                      currentPrice: quote.currentPrice,
+                      changeAmount: quote.changeAmount,
+                      changeRate: quote.changeRate,
+                    ),
+                  SizedBox(
+                    height: 300, // 차트 자리, 실제 차트 만들면 이 높이 기준으로 그리면 됨
+                    child: Center(
+                      child: Text(
+                        '${widget.name} 상세 페이지 (차트는 나중에)',
+                        style: TextStyle(color: colors.textPrimary, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                  if (quote != null) _StatsSection(quote: quote),
+                  if (_dailyQuotes.isNotEmpty) _DailyQuoteSection(quotes: _dailyQuotes),
+                ],
               ),
             ),
           ),
-          if (quote != null) _StatsSection(quote: quote),
-          // TODO: 하드코딩 3줄 -> 일별 시세 API 연동하기
-          const _DailyQuoteSection(),
         ],
       ),
     );
@@ -341,31 +362,14 @@ String _formatThousandUnit(int value) => '${formatThousands((value / 1000).round
 // 시가총액은 "1,063조" 형태
 String _formatTrillionUnit(int value) => '${formatThousands((value / 1000000000000).round())}조';
 
-// 일별 시세
-class _DailyQuote {
-  const _DailyQuote({
-    required this.date,
-    required this.closePrice,
-    required this.changeAmount,
-    required this.volume,
-  });
-
-  final String date;
-  final int closePrice;
-  final int changeAmount;
-  final int volume;
-}
-
-// TODO: 하드코딩 -> 일별 시세 API 연동하면 지우기
-const List<_DailyQuote> _mockDailyQuotes = <_DailyQuote>[
-  _DailyQuote(date: '03.27', closePrice: 179700, changeAmount: -400, volume: 29113466),
-  _DailyQuote(date: '03.26', closePrice: 180100, changeAmount: 1200, volume: 32074131),
-  _DailyQuote(date: '03.25', closePrice: 178900, changeAmount: 0, volume: 27441209),
-];
+// date(yyyyMMdd)를 "MM.DD"로 바꿔서 보여줌
+String _displayDate(String yyyyMMdd) => '${yyyyMMdd.substring(4, 6)}.${yyyyMMdd.substring(6, 8)}';
 
 // 일별 시세 표
 class _DailyQuoteSection extends StatelessWidget {
-  const _DailyQuoteSection();
+  const _DailyQuoteSection({required this.quotes});
+
+  final List<DailyQuote> quotes;
 
   @override
   Widget build(BuildContext context) {
@@ -394,7 +398,7 @@ class _DailyQuoteSection extends StatelessWidget {
           ),
           SizedBox(height: dimens.space1),
           const _DailyQuoteHeaderRow(),
-          for (final _DailyQuote quote in _mockDailyQuotes) _DailyQuoteRow(quote: quote),
+          for (final DailyQuote quote in quotes) _DailyQuoteRow(quote: quote),
         ],
       ),
     );
@@ -432,7 +436,7 @@ class _DailyQuoteHeaderRow extends StatelessWidget {
 class _DailyQuoteRow extends StatelessWidget {
   const _DailyQuoteRow({required this.quote});
 
-  final _DailyQuote quote;
+  final DailyQuote quote;
 
   @override
   Widget build(BuildContext context) {
@@ -461,7 +465,7 @@ class _DailyQuoteRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(child: Text(quote.date, style: cellStyle(colors.textSecondary))),
+          Expanded(child: Text(_displayDate(quote.date), style: cellStyle(colors.textSecondary))),
           Expanded(
             child: Text(
               formatThousands(quote.closePrice),
