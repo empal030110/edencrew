@@ -1,4 +1,4 @@
-# edencrew Flutter 과제 — empal03
+# edencrew Flutter 과제 — 주민규
 
 국내 주식 관심종목 앱. 관심 / 검색 / 종목상세 세 화면을 구현했습니다.
 
