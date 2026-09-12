@@ -7,6 +7,7 @@ import '../models/stock_quote.dart';
 import '../models/stock_search_result.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
+import '../utils/number_format.dart';
 import '../utils/watchlist_sort.dart';
 import 'stock_detail_screen.dart';
 
@@ -431,7 +432,7 @@ class _WatchlistRow extends StatelessWidget {
                     ]
                   : <Widget>[
                       Text(
-                        _formatThousands(quote.currentPrice),
+                        formatThousands(quote.currentPrice),
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 15,
@@ -528,20 +529,8 @@ class _WatchlistEmptyState extends StatelessWidget {
   }
 }
 
-// 천 단위 콤마만 찍어주는 용도라 intl 패키지 없이 직접 구현
-String _formatThousands(int value) {
-  final bool isNegative = value < 0;
-  final String digits = value.abs().toString();
-  final StringBuffer buffer = StringBuffer();
-  for (int i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
-    buffer.write(digits[i]);
-  }
-  return (isNegative ? '-' : '') + buffer.toString();
-}
-
 String _formatChangeAmount(int amount) {
-  return amount > 0 ? '+${_formatThousands(amount)}' : _formatThousands(amount);
+  return amount > 0 ? '+${formatThousands(amount)}' : formatThousands(amount);
 }
 
 String _formatChangeRate(double rate) {
