@@ -76,6 +76,18 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     setState(() => _quotes = quotes);
   }
 
+  // 새로고침 버튼 -> 종목 구성이 그대로여도 강제로 다시 조회
+  void _refresh() {
+    final List<String> symbols = widget.favorites.ids.map(symbolFromCanonicalId).toList();
+    if (symbols.isEmpty) return;
+    setState(() {
+      _metadata = const <String, StockSearchResult>{};
+      _quotes = const <String, StockQuote>{};
+    });
+    _loadMetadata(symbols);
+    _loadQuotes(symbols);
+  }
+
   Future<void> _showSortSheet() async {
     final AppDimens dimens = context.dimens;
     final WatchlistSortOption? picked = await showModalBottomSheet<WatchlistSortOption>(
@@ -100,6 +112,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         _WatchlistHeader(
           sortOption: _sortOption,
           onTapSort: _showSortSheet,
+          onTapRefresh: _refresh,
         ),
         Expanded(
           // favorites 바뀔 때마다 목록만 다시 그림
@@ -122,10 +135,15 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
 // 언더스코어(_)로 시작하는 클래스는 이 파일 안에서만 쓰는 private 위젯이라는 뜻
 class _WatchlistHeader extends StatelessWidget {
-  const _WatchlistHeader({required this.sortOption, required this.onTapSort});
+  const _WatchlistHeader({
+    required this.sortOption,
+    required this.onTapSort,
+    required this.onTapRefresh,
+  });
 
   final WatchlistSortOption sortOption;
   final VoidCallback onTapSort;
+  final VoidCallback onTapRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -181,14 +199,18 @@ class _WatchlistHeader extends StatelessWidget {
                 ),
               ),
               SizedBox(width: dimens.space4),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Image.asset(
-                  'assets/icons/refresh.png',
-                  width: dimens.iconMd,
-                  height: dimens.iconMd,
-                  color: colors.textSecondary,
-                  colorBlendMode: BlendMode.srcIn,
+              GestureDetector(
+                onTap: onTapRefresh,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Image.asset(
+                    'assets/icons/refresh.png',
+                    width: dimens.iconMd,
+                    height: dimens.iconMd,
+                    color: colors.textSecondary,
+                    colorBlendMode: BlendMode.srcIn,
+                  ),
                 ),
               ),
             ],
