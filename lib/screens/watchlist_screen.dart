@@ -125,7 +125,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
               if (symbols.isEmpty) return const _WatchlistEmptyState();
               final List<String> sorted =
                   sortWatchlistSymbols(symbols, _sortOption, _metadata, _quotes);
-              return _WatchlistList(symbols: sorted, metadata: _metadata, quotes: _quotes);
+              return _WatchlistList(symbols: sorted, metadata: _metadata, quotes: _quotes, favorites: widget.favorites);
             },
           ),
         ),
@@ -320,11 +320,13 @@ class _WatchlistList extends StatelessWidget {
     required this.symbols,
     required this.metadata,
     required this.quotes,
+    required this.favorites,
   });
 
   final List<String> symbols;
   final Map<String, StockSearchResult> metadata;
   final Map<String, StockQuote> quotes;
+  final FavoritesController favorites;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +338,7 @@ class _WatchlistList extends StatelessWidget {
           symbol: symbol,
           metadata: metadata[symbol],
           quote: quotes[symbol],
+          favorites: favorites,
         );
       },
     );
@@ -345,11 +348,12 @@ class _WatchlistList extends StatelessWidget {
 // 관심 종목 한 줄. 왼쪽은 이름/코드, 오른쪽은 시세
 // metadata/quote가 null이면 아직 그 API 응답이 안 온 상태
 class _WatchlistRow extends StatelessWidget {
-  const _WatchlistRow({required this.symbol, required this.metadata, required this.quote});
+  const _WatchlistRow({required this.symbol, required this.metadata, required this.quote, required this.favorites});
 
   final String symbol;
   final StockSearchResult? metadata;
   final StockQuote? quote;
+  final FavoritesController favorites;
 
   @override
   Widget build(BuildContext context) {
@@ -371,7 +375,7 @@ class _WatchlistRow extends StatelessWidget {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (BuildContext context) =>
-              StockDetailScreen(symbol: symbol, name: name, market: market),
+              StockDetailScreen(symbol: symbol, name: name, market: market, favorites: favorites),
         ),
       ),
       child: Container(

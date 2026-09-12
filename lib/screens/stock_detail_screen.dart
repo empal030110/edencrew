@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../state/favorites_controller.dart';
 import '../theme/theme.dart';
 
 // 종목 상세 화면
@@ -9,11 +10,13 @@ class StockDetailScreen extends StatelessWidget {
     required this.symbol,
     required this.name,
     required this.market,
+    required this.favorites,
   });
 
   final String symbol;
   final String name;
   final String market;
+  final FavoritesController favorites;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,7 @@ class StockDetailScreen extends StatelessWidget {
       backgroundColor: colors.surfaceBase,
       body: Column(
         children: <Widget>[
-          _DetailHeader(symbol: symbol, name: name, market: market),
+          _DetailHeader(symbol: symbol, name: name, market: market, favorites: favorites),
           Expanded(
             child: Center(
               child: Text(
@@ -43,16 +46,19 @@ class _DetailHeader extends StatelessWidget {
     required this.symbol,
     required this.name,
     required this.market,
+    required this.favorites,
   });
 
   final String symbol;
   final String name;
   final String market;
+  final FavoritesController favorites;
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
     final AppDimens dimens = context.dimens;
+    final String id = 'domestic:$symbol';
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -107,11 +113,17 @@ class _DetailHeader extends StatelessWidget {
               ],
             ),
           ),
-          // TODO: 관심 등록/해제 기능은 나중에 -> 지금은 항상 비활성 상태로만 표시
-          Icon(
-            Icons.star_border,
-            size: dimens.iconLg,
-            color: colors.favoriteInactive,
+          // 관심 등록 상태만 반영
+          ListenableBuilder(
+            listenable: favorites,
+            builder: (BuildContext context, Widget? _) {
+              final bool isFavorite = favorites.isFavorite(id);
+              return Icon(
+                isFavorite ? Icons.star : Icons.star_border,
+                size: dimens.iconLg,
+                color: isFavorite ? colors.favoriteActive : colors.favoriteInactive,
+              );
+            },
           ),
         ],
       ),

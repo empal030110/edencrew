@@ -268,7 +268,7 @@ class _SearchResultRow extends StatelessWidget {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (BuildContext context) =>
-              StockDetailScreen(symbol: result.symbol, name: result.name, market: result.market),
+              StockDetailScreen(symbol: result.symbol, name: result.name, market: result.market, favorites: favorites),
         ),
       ),
       child: Container(
