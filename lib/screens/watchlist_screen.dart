@@ -372,27 +372,37 @@ class _WatchlistRow extends StatelessWidget {
         ? colors.priceDownText
         : colors.priceFlatText;
 
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) =>
-              StockDetailScreen(symbol: symbol, name: name, market: market, favorites: favorites),
-        ),
+    return Dismissible(
+      key: ValueKey<String>(symbol),
+      direction: DismissDirection.endToStart, // 오른쪽에서 왼쪽으로 스와이프해야 삭제
+      onDismissed: (DismissDirection _) => favorites.toggle('domestic:$symbol'),
+      background: Container(
+        color: colors.feedbackWarning,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.symmetric(horizontal: dimens.space4),
+        child: Icon(Icons.delete_outline, color: colors.textPrimary),
       ),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: dimens.space3,
-          horizontal: dimens.space4,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: colors.borderSubtle,
-              width: dimens.borderHairline,
-            ),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) =>
+                StockDetailScreen(symbol: symbol, name: name, market: market, favorites: favorites),
           ),
         ),
-        child: Row(
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            vertical: dimens.space3,
+            horizontal: dimens.space4,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: colors.borderSubtle,
+                width: dimens.borderHairline,
+              ),
+            ),
+          ),
+          child: Row(
           children: <Widget>[
             Expanded(
               child: Column(
@@ -458,6 +468,7 @@ class _WatchlistRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
