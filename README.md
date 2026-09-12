@@ -1,117 +1,128 @@
-# Flutter 신입 개발자 과제
+# edencrew Flutter 과제 — empal03
 
-국내 주식 관심종목 앱의 화면 3개를 **Flutter 코드**로 구현하고, 그중 한 화면을 저희 플랫폼 **Lucy Studio**로 다시 만드는 과제입니다. 전체 기간은 4일입니다.
+국내 주식 관심종목 앱. 관심 / 검색 / 종목상세 세 화면을 구현했습니다.
 
-이 문서는 저장소를 실행하고 디자인 토큰을 쓰는 방법만 다룹니다. **과제 요구사항은 아래 문서에 있습니다.**
+## 실행 방법
 
-| 문서 | 내용 |
-| --- | --- |
-| [`docs/ASSIGNMENT.md`](docs/ASSIGNMENT.md) | 화면별 요구사항, 평가 기준, 제출 방법 |
-| [`docs/NAVER_API.md`](docs/NAVER_API.md) | Naver 데이터 연동 가이드 (endpoint 4개) |
-
-**Figma 시안 링크는 안내 메일에 담겨 있습니다.** 시안의 `Screens` 페이지에는 화면 3개 외에 빈 상태 · 정렬 · 토스트처럼 같은 화면의 다른 상태를 그린 프레임과, 토큰 확인용 `Design Tokens — Dark` 프레임이 함께 있습니다. 어떤 프레임이 무엇인지는 [`docs/ASSIGNMENT.md`의 대상 화면](docs/ASSIGNMENT.md#대상-화면)에 정리해 두었습니다.
-
-AI 도구를 활용해도 괜찮습니다. 다만 이후 기술 면접에서 구현 내용을 구체적으로 질문할 예정이니, 직접 작성한 코드라고 설명할 수 있을 정도로 이해하고 계셔야 합니다.
-
----
-
-## 실행하기
-
-이 저장소를 그대로 사용하면 됩니다. 별도로 프로젝트를 만들지 않아도 됩니다.
+- Flutter 3.47.3 (stable), Dart 3.13.3
+- 실행 대상이 Chrome(웹)으로 잡혀 있으면 Naver endpoint의 CORS 때문에 요청이 막히니, 모바일 기기/에뮬레이터나 맥OS 데스크톱으로 실행해 주세요.
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-모든 플랫폼으로 실행할 수 있게 만들어져 있습니다. 다만 아래 두 가지를 주의해 주세요.
+**확인한 플랫폼/기기**
+- macOS 데스크톱 (darwin-arm64)
+- iOS 시뮬레이터 (iPhone 16 Plus, iOS 18.5)
 
-- **웹(Chrome)에서는 동작하지 않습니다.** Naver endpoint가 CORS를 허용하지 않아 브라우저에서는 요청이 막힙니다. IDE 기본 실행 대상이 Chrome으로 잡혀 있는 경우가 많으니 실행 대상을 바꿔 주세요.
-- **모바일 기기나 에뮬레이터, 또는 Figma 프레임에 가까운 창 크기에서 확인해 주세요.** 데스크톱에서 창을 크게 띄우고 비교하면 의미가 없습니다.
+**폰트 처리 방식**
 
-macOS 데스크톱으로 확인하실 경우 네트워크 요청에 entitlement가 필요합니다. debug 실행은 기본 설정으로 동작합니다.
+스타터에 등록되어 있던 방식 그대로 사용했습니다.
 
----
+## 구현 범위
 
-## 저장소 구성
+### 필수 항목
 
-`flutter create` 직후의 기본 템플릿에 **디자인 토큰과 폰트만 미리 준비해 둔 상태**입니다.
+관심 / 검색 / 종목상세 / 상태 동기화의 필수 항목은 모두 구현했습니다.
 
-```text
-docs/
-  ASSIGNMENT.md           과제 요구사항 · 평가 기준 · 제출 방법
-  NAVER_API.md            Naver 데이터 연동 가이드
+- **관심**: 목록(종목명·코드·시장·현재가·등락, 3가지 등락 색상), 새로고침, 하단 탭바, 스켈레톤, 빈 상태, 정렬(현재가순·등락률순·가나다순, 바텀시트, 헤더 칩 반영)
+- **검색**: 입력창·지우기, 결과 행(하이라이트·별 아이콘), 등록/해제 즉시 반영 + 토스트, 결과 행 → 상세 이동, 검색 전/결과 없음 상태
+- **종목상세**: 헤더(뒤로가기·종목명·코드·시장·관심 버튼), 현재가 + 등락(▲/▼), 기간 탭 4개(1개월/3개월/6개월/1년) 전부 동작, 캔들 차트, 요약 카드(시가/고가/저가/거래량/시가총액, 축약 표기), 일별 시세 표
+- **상태 동기화**: 관심 등록/해제가 관심·검색·상세 세 화면에 모두 즉시 반영
+
+### 남은 선택 항목
+
+- Pull to refresh, 정렬 기준 로컬 저장
+- 검색어 입력 중 로딩 표시, 최근 검색어, 토스트 등장/퇴장 커스텀 애니메이션
+- 차트 축 라벨, 거래량 바, 차트 영역 채우기, 터치 크로스헤어/툴팁, 차트 전환 애니메이션, 일별 시세 표 무한 스크롤
+
+### 구현한 선택 항목
+
+- 검색 입력 디바운스 (300ms)
+- 관심종목 스와이프 삭제 (`Dismissible`)
+- 단위 테스트 16개 (`flutter test`, 파싱/정렬/하이라이트/상태 로직 위주)
+
+```
+$ flutter test
+00:00 +16: All tests passed!
+```
+
+## 기술 선택과 이유
+
+**상태관리**
+
+별도 상태관리 라이브러리를 쓰지 않았습니다. 화면이 3개뿐이고 전역으로 공유해야 하는 상태가 "관심 등록된 종목 id 집합" 하나뿐이라, `ChangeNotifier`(`FavoritesController`) 하나를 `AppShell`에서 만들어 각 화면에 생성자로 주입하는 방식으로 충분하다고 판단했습니다. 화면별 로컬 상태(검색어, 선택된 기간, 정렬 기준 등)는 각 화면의 `State`가 그대로 들고 있습니다. Provider/Riverpod/Bloc을 안 쓴 이유는 상태 전파 범위가 좁아서 boilerplate 대비 이득이 크지 않다고 봤기 때문입니다.
+
+**폴더 구조**
+
+기능(feature)별이 아니라 역할(layer)별로 나눴습니다. 화면이 3개뿐이라 feature 폴더를 만들면 오히려 파일을 찾기 더 번거로울 것 같아서입니다.
+
+```
 lib/
-  main.dart               앱 진입점. 시작용 화면이 들어 있습니다
-  theme/
-    README.md             Figma 변수 ↔ Dart 필드 대응표
-    app_palette.dart      원시 팔레트 (Figma Primitives)
-    app_colors.dart       시맨틱 색상 토큰 (Figma Semantic / Dark)
-    app_dimens.dart       간격 · 반경 · 크기 토큰 (Figma Scale)
-    app_typography.dart   서체 · 굵기 토큰 (Figma Typography)
-    app_theme.dart        ThemeData 조립 + context 확장
-    theme.dart            barrel
-assets/
-  fonts/                  Noto Sans KR (등록까지 마쳐둔 상태입니다)
-  mock/                   응답 샘플을 저장해 쓰실 위치입니다
+  screens/   화면 (WatchlistScreen, SearchScreen, StockDetailScreen)
+  widgets/   화면 간 공용 위젯 (하단 탭바)
+  data/      API 요청 + 파싱 (repository)
+  models/    화면에서 쓰는 도메인 모델
+  state/     FavoritesController
+  utils/     순수 함수 (포맷팅, 정렬, 하이라이트, 토스트)
+  theme/     디자인 토큰
 ```
 
-`lib/` 아래 나머지 구조는 없습니다. **폴더 구조와 아키텍처는 직접 설계해 주세요.**
+**아키텍처 패턴**
 
-`lib/main.dart`의 `StartHereScreen`은 토큰 사용 예시를 겸한 임시 화면입니다. 지우고 직접 구현한 화면으로 바꿔 주세요.
+각 API마다 "요청 → 파싱(DTO) → 모델 변환"을 분리했습니다 (`lib/data/dto/*.dart` → `lib/data/*_repository.dart` → `lib/models/*.dart`). 네트워크 호출과 파싱/필터링/변환 로직을 분리해서, 파싱 로직만 네트워크 없이 단위 테스트할 수 있게 했습니다. 화면은 별도 ViewModel/Controller 클래스 없이 `State` 안에서 repository를 직접 호출합니다.
 
----
+**주요 패키지**
 
-## 디자인 토큰
+- `http` — 4개 endpoint 요청에 사용한 외부 패키지입니다.
 
-색상은 `ThemeExtension`으로 정의되어 있습니다. `AppTheme.dark`가 `MaterialApp`에 이미 연결되어 있으니 `context`로 꺼내 쓰시면 됩니다.
+**차트 처리 방식**
 
-```dart
-MaterialApp(
-  theme: AppTheme.dark,
-  home: const WatchlistScreen(),
-)
-```
+`CustomPainter`로 직접 그렸습니다 (패키지 미사용).
+캔들 몸통(시가~종가)과 꼬리(고가~저가)를 `Canvas.drawRect`/`drawLine`으로 그리고, 색상은 `chartLineUp`/`chartLineDown`/`chartLineFlat`을 그대로 사용했습니다.
 
-```dart
-Text(
-  '삼성전자',
-  style: TextStyle(color: context.colors.textPrimary),
-)
+**디자인 토큰 추가**
 
-Container(
-  padding: EdgeInsets.symmetric(horizontal: context.dimens.space4),
-  decoration: BoxDecoration(
-    color: context.colors.surfaceRaised,
-    borderRadius: BorderRadius.circular(context.dimens.radiusMd),
-  ),
-)
-```
+기존 토큰에 없는 값이 필요할 때만 추가했습니다.
 
-지켜 주셔야 할 것:
+| 추가한 토큰 | 값 | 이유 |
+| --- | --- | --- |
+| `AppDimens.radiusXl` | 16 | 정렬 바텀시트 상단 모서리. 기존 `radiusLg`(12)에 없는 값 |
+| `AppDimens.iconLg` | 22 | 하단 탭바 아이콘 / 검색·상세 화면 관심 별 아이콘. `iconSm`(16)·`iconMd`(20)에 없는 값 |
+| `AppColors.textFafafa` | `#FAFAFA` | 정렬 체크 아이콘에 사용 |
 
-- **토큰 값을 수정하지 마세요.** 색상 hex를 화면 코드에 직접 쓰거나 `AppPalette`를 화면에서 바로 참조하지 말고, 항상 `context.colors.*` 시맨틱 토큰을 쓰세요. (필수)
-- 필요한 토큰이 없다고 판단되면 추가해도 됩니다. 다만 왜 추가했는지 메모에 적어 주세요.
-- **글자 크기와 행간은 토큰으로 정의되어 있지 않습니다.** Figma는 서체와 굵기만 변수로 관리하고 있어서, 크기는 각 화면의 텍스트 레이어에서 직접 확인해 주세요.
+그 외 스펙에 명시된 특정 px 값(서치바 세로 패딩 10px, 토스트 패딩 14px, 바텀시트 패딩 18px/21px/34px, 텍스트 줄간격 2px 등)은 토큰 스케일(4/8/12/16/20/24)에 맞아떨어지지 않아 리터럴로 개발했습니다.
 
-Figma 변수명과 Dart 필드명, 원시값, hex는 [`lib/theme/README.md`](lib/theme/README.md)에 1:1로 정리해 두었습니다. Figma에서 본 색이 코드의 어느 필드인지 헷갈릴 때 그 표를 보시면 됩니다.
+## 직접 판단한 부분과 이유
 
-### 폰트
+**토스트 노출 시간과 사라지는 방식**
 
-`Noto Sans KR`을 사용합니다. 폰트 파일과 `pubspec.yaml` 등록은 **미리 해두었으니 따로 작업하지 않으셔도 됩니다.**
+Flutter `SnackBar`의 기본 동작(약 4초 노출, 기본 슬라이드 애니메이션)을 그대로 사용했습니다. 별도 타이머나 커스텀 애니메이션은 만들지 않았습니다. 연속으로 별을 누를 때 토스트가 쌓이지 않도록, 새 토스트를 띄우기 전에 `ScaffoldMessenger.hideCurrentSnackBar()`로 이전 토스트를 먼저 지웁니다.
 
-`assets/fonts/`에 Regular / Medium / Bold 세 가지 굵기가 들어 있고, `AppTypography.fontFamily`(`'NotoSansKR'`)와 같은 이름으로 등록되어 있습니다. `AppTheme.dark`가 이 family를 기본 서체로 잡아둡니다.
+**로딩 / 네트워크 에러 처리**
 
-다른 방식(예: `google_fonts` 패키지)으로 바꾸셔도 무방합니다. 바꾸셨다면 메모에 적어 주세요.
+- 관심 목록: 시세를 아직 못 받은 행은 스켈레톤(`feedbackSkeleton`)으로 표시합니다 (필수 항목).
+- 종목상세: 현재가/요약 카드/일별 시세/차트는 데이터가 오기 전까지 해당 섹션 자체를 숨깁니다 (별도 스켈레톤 없음).
+- 네트워크 에러에 대한 별도 에러 UI(재시도 버튼 등)는 만들지 않았습니다. 요청이 실패하면 해당 섹션이 계속 로딩 중인 것처럼 비어 있는 상태로 남습니다.
 
----
+**긴 종목명 오버플로**
 
-## 이 README에 대해
+관심 목록 행, 상세 화면 헤더에서 종목명을 1줄로 제한하고 넘치면 말줄임표(`...`)로 처리했습니다 (`maxLines: 1`, `TextOverflow.ellipsis`).
 
-제출 시 이 문서는 **본인 프로젝트의 README로 덮어써 주세요.** 작성할 내용은 [`docs/ASSIGNMENT.md`의 제출 방법](docs/ASSIGNMENT.md#제출-방법)에 정리되어 있습니다. `docs/` 아래 문서는 남겨 두시면 됩니다.
+**시세를 못 받은 행이 있을 때의 정렬**
 
-## 라이선스
+`현재가순`/`등락률순`에서 시세가 아직 없는(`null`) 행은 정렬 기준과 무관하게 항상 맨 뒤로 보냅니다 (`lib/utils/watchlist_sort.dart`).
 
-이 저장소는 이든크루 채용 과제의 스타터 템플릿으로만 제공됩니다. 과제 수행을 위해 복제하고 수정하는 것은 괜찮습니다. 다만 그 범위를 넘어선 재배포나 상업적 이용은 Edencrew의 명시적인 허가 없이 허용되지 않습니다. 자세한 내용은 루트의 `LICENSE` 파일을 확인해 주세요.
+**Figma와 다르게 구현한 부분**
 
-**별도로 전달드린 Figma 시안과 Lucy Studio 설치 파일은 외부에 공유하지 말아주세요.**
+- 캔들 차트 렌더링 디테일(캔들 두께/간격, Y축 범위 계산 방식, 축 라벨 생략)은 과제 문서에서 명시적으로 예외로 둔 부분이라 임의로 구현했습니다. 캔들 몸통 두께는 "당일 시가~종가 차이"로, 색상은 "전일 종가 대비"로 계산해서 일별 시세 표/상단 등락과 색상 기준을 통일했습니다.
+- 상세 화면 시가/고가/저가/시가총액 요약 카드는 화면 너비에 따라 유동적으로 늘어나도록(`Expanded`) 구현했습니다.
+
+## 막혔던 지점과 어떻게 접근했는지
+
+- **macOS 코드사인 실패**: 프로젝트가 iCloud Drive로 동기화되는 `~/Desktop` 폴더 안에 있어서, macOS가 파일에 계속 붙이는 확장 속성(Finder 메타데이터) 때문에 `codesign`이 실패했습니다. 프로젝트를 iCloud 동기화 대상이 아닌 `~/dev`로 옮겨서 해결했습니다.
+- **일별 시세 HTML 인코딩**: `sise_day.naver` 응답이 EUC-KR이라 `utf8.decode()`로 바로 읽으면 깨집니다. 추출해야 하는 값(날짜·숫자·영문 class명)이 전부 ASCII 범위라는 점을 이용해, EUC-KR 전용 디코더 없이 `latin1.decode()`(바이트 1:1 매핑)로 읽어도 필요한 값은 깨지지 않는다는 걸 확인하고 그대로 사용했습니다.
+- **일별 시세 API 404**: 기본 User-Agent 없이 요청하면 404 에러 페이지가 돌아옵니다. 요청 헤더에 `User-Agent`를 추가해서 해결했습니다.
+- **macOS 네트워크 요청 차단**: 앱 샌드박스 entitlements에 `com.apple.security.network.client` 권한이 빠져 있어서 실제 API 호출이 막혔습니다. `DebugProfile.entitlements`/`Release.entitlements`에 권한을 추가해서 해결했습니다.
+- **일별 시세 페이지 캐싱**: 기간 탭을 바꿀 때마다 전체를 새로 받지 않도록, symbol별로 페이지 단위 캐시를 두고 필요한 페이지만 추가로 요청하도록 구성했습니다 (`lib/data/daily_quote_repository.dart`).
