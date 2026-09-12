@@ -80,6 +80,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                       changeAmount: quote.changeAmount,
                       changeRate: quote.changeRate,
                     ),
+                  const _PeriodTabs(),
                   SizedBox(
                     height: 300, // 차트 자리, 실제 차트 만들면 이 높이 기준으로 그리면 됨
                     child: Center(
@@ -257,6 +258,87 @@ class _PriceSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// 기간 탭. 지금은 UI만 -> 탭 누르면 선택 표시만 바뀌고 실제 기간별 데이터 조회는 안 함
+enum _Period { oneMonth, threeMonths, sixMonths, oneYear }
+
+const Map<_Period, String> _periodLabels = <_Period, String>{
+  _Period.oneMonth: '1개월',
+  _Period.threeMonths: '3개월',
+  _Period.sixMonths: '6개월',
+  _Period.oneYear: '1년',
+};
+
+class _PeriodTabs extends StatefulWidget {
+  const _PeriodTabs();
+
+  @override
+  State<_PeriodTabs> createState() => _PeriodTabsState();
+}
+
+class _PeriodTabsState extends State<_PeriodTabs> {
+  _Period _selected = _Period.oneMonth;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppDimens dimens = context.dimens;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: dimens.space4),
+      child: Row(
+        children: <Widget>[
+          for (final _Period period in _Period.values) ...<Widget>[
+            // 탭 4개가 화면 너비를 똑같이 나눠 가짐 -> 화면이 넓어지면 같이 늘어남
+            Expanded(
+              child: _PeriodTab(
+                label: _periodLabels[period]!,
+                selected: period == _selected,
+                onTap: () => setState(() => _selected = period),
+              ),
+            ),
+            if (period != _Period.values.last) SizedBox(width: dimens.space1),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PeriodTab extends StatelessWidget {
+  const _PeriodTab({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? colors.accentBg : null,
+          borderRadius: BorderRadius.circular(dimens.radiusMd),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? colors.accentDefault : colors.textSecondary,
+            fontSize: 13,
+            fontWeight: AppTypography.regular,
+            height: 18 / 13,
+            letterSpacing: 0,
+          ),
+        ),
       ),
     );
   }
