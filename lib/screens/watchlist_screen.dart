@@ -8,12 +8,13 @@ import '../models/stock_search_result.dart';
 import '../state/favorites_controller.dart';
 import '../theme/theme.dart'; // context.colors, context.dimens 등 토큰을 쓰기 위한 import
 import '../utils/watchlist_sort.dart';
+import 'stock_detail_screen.dart';
 
 const Map<WatchlistSortOption, String> _sortOptionLabels = <WatchlistSortOption, String>{
-  WatchlistSortOption.byPrice: '현재가순',
-  WatchlistSortOption.byChangeRate: '등락률순',
-  WatchlistSortOption.byName: '가나다순',
-};
+      WatchlistSortOption.byPrice: '현재가순',
+      WatchlistSortOption.byChangeRate: '등락률순',
+      WatchlistSortOption.byName: '가나다순',
+    };
 
 // 관심 화면
 // 이름/거래소(메타데이터)랑 시세는 관심 목록이 바뀔 때마다 한 번에 조회 -> StatefulWidget으로 관리
@@ -91,16 +92,16 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   Future<void> _showSortSheet() async {
     final AppDimens dimens = context.dimens;
     final WatchlistSortOption? picked = await showModalBottomSheet<WatchlistSortOption>(
-      context: context,
-      backgroundColor: context.colors.surfaceOverlay,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(dimens.radiusXl),
-          topRight: Radius.circular(dimens.radiusXl),
-        ),
-      ),
-      builder: (BuildContext context) => _SortSheet(selected: _sortOption),
-    );
+          context: context,
+          backgroundColor: context.colors.surfaceOverlay,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(dimens.radiusXl),
+              topRight: Radius.circular(dimens.radiusXl),
+            ),
+          ),
+          builder: (BuildContext context) => _SortSheet(selected: _sortOption),
+        );
     if (picked == null || !mounted) return;
     setState(() => _sortOption = picked);
   }
@@ -361,87 +362,95 @@ class _WatchlistRow extends StatelessWidget {
     final Color? changeColor = quote == null
         ? null
         : quote.changeAmount > 0
-            ? colors.priceUpText
-            : quote.changeAmount < 0
-                ? colors.priceDownText
-                : colors.priceFlatText;
+        ? colors.priceUpText
+        : quote.changeAmount < 0
+        ? colors.priceDownText
+        : colors.priceFlatText;
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: dimens.space3,
-        horizontal: dimens.space4,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: colors.borderSubtle,
-            width: dimens.borderHairline,
-          ),
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) =>
+              StockDetailScreen(symbol: symbol, name: name),
         ),
       ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  name,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: AppTypography.medium,
-                    height: 20 / 15,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-                SizedBox(height: dimens.space1),
-                Text(
-                  '$symbol · $market',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: AppTypography.regular,
-                    height: 14 / 11,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: dimens.space3,
+          horizontal: dimens.space4,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: colors.borderSubtle,
+              width: dimens.borderHairline,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: quote == null
-                ? <Widget>[
-                    _SkeletonBox(width: 64, height: 16, color: colors.feedbackSkeleton),
-                    SizedBox(height: dimens.space1),
-                    _SkeletonBox(width: 48, height: 12, color: colors.feedbackSkeleton),
-                  ]
-                : <Widget>[
-                    Text(
-                      _formatThousands(quote.currentPrice),
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: AppTypography.medium,
-                        height: 20 / 15,
-                        letterSpacing: -0.1,
-                      ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    name,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: AppTypography.medium,
+                      height: 20 / 15,
+                      letterSpacing: -0.1,
                     ),
-                    SizedBox(height: dimens.space1),
-                    Text(
-                      '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
-                      style: TextStyle(
-                        color: changeColor,
-                        fontSize: 11,
-                        fontWeight: AppTypography.regular,
-                        height: 14 / 11,
-                        letterSpacing: 0,
-                      ),
+                  ),
+                  SizedBox(height: dimens.space1),
+                  Text(
+                    '$symbol · $market',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: AppTypography.regular,
+                      height: 14 / 11,
+                      letterSpacing: 0,
                     ),
-                  ],
-          ),
-        ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: quote == null
+                  ? <Widget>[
+                      _SkeletonBox(width: 64, height: 16, color: colors.feedbackSkeleton),
+                      SizedBox(height: dimens.space1),
+                      _SkeletonBox(width: 48, height: 12, color: colors.feedbackSkeleton),
+                    ]
+                  : <Widget>[
+                      Text(
+                        _formatThousands(quote.currentPrice),
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: AppTypography.medium,
+                          height: 20 / 15,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      SizedBox(height: dimens.space1),
+                      Text(
+                        '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
+                        style: TextStyle(
+                          color: changeColor,
+                          fontSize: 11,
+                          fontWeight: AppTypography.regular,
+                          height: 14 / 11,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+            ),
+          ],
+        ),
       ),
     );
   }
