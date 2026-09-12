@@ -335,11 +335,12 @@ class _WatchlistRow extends StatelessWidget {
     final String name = metadata?.name ?? symbol; // 메타데이터 오기 전엔 심볼로 대신 표시
     final String market = metadata?.market ?? '-';
 
-    final Color changeColor = quote == null
-        ? colors.textTertiary
-        : quote!.changeAmount > 0
+    final StockQuote? quote = this.quote;
+    final Color? changeColor = quote == null
+        ? null
+        : quote.changeAmount > 0
             ? colors.priceUpText
-            : quote!.changeAmount < 0
+            : quote.changeAmount < 0
                 ? colors.priceDownText
                 : colors.priceFlatText;
 
@@ -388,33 +389,58 @@ class _WatchlistRow extends StatelessWidget {
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              Text(
-                quote == null ? '-' : _formatThousands(quote!.currentPrice),
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: AppTypography.medium,
-                  height: 20 / 15,
-                  letterSpacing: -0.1,
-                ),
-              ),
-              SizedBox(height: dimens.space1),
-              Text(
-                quote == null
-                    ? '조회 중'
-                    : '${_formatChangeAmount(quote!.changeAmount)} (${_formatChangeRate(quote!.changeRate)})',
-                style: TextStyle(
-                  color: changeColor,
-                  fontSize: 11,
-                  fontWeight: AppTypography.regular,
-                  height: 14 / 11,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
+            children: quote == null
+                ? <Widget>[
+                    _SkeletonBox(width: 64, height: 16, color: colors.feedbackSkeleton),
+                    SizedBox(height: dimens.space1),
+                    _SkeletonBox(width: 48, height: 12, color: colors.feedbackSkeleton),
+                  ]
+                : <Widget>[
+                    Text(
+                      _formatThousands(quote.currentPrice),
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: AppTypography.medium,
+                        height: 20 / 15,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    SizedBox(height: dimens.space1),
+                    Text(
+                      '${_formatChangeAmount(quote.changeAmount)} (${_formatChangeRate(quote.changeRate)})',
+                      style: TextStyle(
+                        color: changeColor,
+                        fontSize: 11,
+                        fontWeight: AppTypography.regular,
+                        height: 14 / 11,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// 현재가, 등락률 스켈레톤
+class _SkeletonBox extends StatelessWidget {
+  const _SkeletonBox({required this.width, required this.height, required this.color});
+
+  final double width;
+  final double height;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(context.dimens.radiusSm),
       ),
     );
   }
