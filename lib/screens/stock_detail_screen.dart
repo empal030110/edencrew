@@ -153,6 +153,8 @@ class _DetailHeader extends StatelessWidget {
               children: <Widget>[
                 Text(
                   name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: 15,
