@@ -45,7 +45,7 @@ class DailyQuoteRepository {
       headers: <String, String>{'User-Agent': 'Mozilla/5.0'},
     );
 
-    // 2. 파싱 - 응답이 EUC-KR인데, 우리가 뽑는 값(날짜/숫자/영문 class명)은 전부 ASCII라 latin1로 디코딩해도 깨지지 않음
+    // 2. 파싱 - 응답이 EUC-KR인데, 뽑는 값(날짜/숫자/영문 class명)은 전부 ASCII -> latin1로 디코딩해도 안 깨짐
     final String html = latin1.decode(response.bodyBytes);
 
     return parseDailySiseHtml(html, requestedPage: page);
@@ -68,7 +68,7 @@ final RegExp _numPattern = RegExp(r'class="tah p11[^"]*">\s*([\d,]+)\s*<');
 final RegExp _directionPattern = RegExp(r'class="bu_p (bu_pup|bu_pdn|bu_pn)"');
 final RegExp _pageLinkPattern = RegExp(r'page=(\d+)');
 
-// 순수 함수라 네트워크 없이 테스트 가능 (test/data/daily_quote_repository_test.dart 참고)
+// 순수 함수 -> 네트워크 없이 테스트 가능 (test/data/daily_quote_repository_test.dart 참고)
 DailySisePage parseDailySiseHtml(String html, {required int requestedPage}) {
   final List<DailyQuote> items = <DailyQuote>[];
 

@@ -44,14 +44,14 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
 
   Future<void> _loadQuote() async {
     final Map<String, StockQuote> quotes = await _quoteRepository.fetch(<String>[widget.symbol]);
-    if (!mounted) return;
+    if (!mounted) return; // await 중에 화면 나갔으면 무시
     setState(() => _quote = quotes[widget.symbol]);
   }
 
   Future<void> _loadDailyQuotes() async {
     final int days = _periodTradingDays[_period]!;
     final List<DailyQuote> quotes = await _dailyQuoteRepository.fetchDays(widget.symbol, days);
-    if (!mounted) return;
+    if (!mounted) return; // await 중에 화면 나갔으면 무시
     setState(() => _dailyQuotes = quotes);
   }
 
@@ -64,7 +64,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
-    final StockQuote? quote = _quote;
+    final StockQuote? quote = _quote; // 필드는 mutable이라 promotion 안 됨 -> 로컬 변수로 복사해서 null 체크 후 바로 씀
 
     return Scaffold(
       backgroundColor: colors.surfaceBase,
@@ -101,6 +101,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   }
 }
 
+// 상세 화면 헤더: 뒤로가기 + 종목명/코드/시장 + 관심 토글
 class _DetailHeader extends StatelessWidget {
   const _DetailHeader({
     required this.symbol,
@@ -223,7 +224,7 @@ class _PriceSection extends StatelessWidget {
             ? colors.priceDownText
             : colors.priceFlatText;
 
-    // 등락률 부호
+    // 등락 방향 화살표
     final String arrow = changeAmount > 0 ? '▲ ' : changeAmount < 0 ? '▼ ' : '';
     final double percent = changeRate * 100;
     final String percentSign = percent > 0 ? '+' : '';
@@ -327,13 +328,14 @@ class _CandleChartPainter extends CustomPainter {
     final double slotWidth = size.width / quotes.length;
     final double candleWidth = slotWidth * 0.6; // 캔들 사이 간격
 
+    // 캔버스 y는 아래로 갈수록 커져서 뒤집어야 가격 높을수록 위로 감
     double yFor(int price) => size.height - (price - low) / range * size.height;
 
     for (int i = 0; i < quotes.length; i++) {
       final DailyQuote quote = quotes[i];
       final double centerX = slotWidth * i + slotWidth / 2;
-      // 그날 시가 대비 종가가 아니라 전일 대비(changeAmount)로 판단해야
-      // 일별 시세 표/상단 등락이랑 색이 일치함
+      // 그날 시가 대비 종가가 아니라 전일 대비(changeAmount)로 판단
+      // -> 일별 시세 표/상단 등락이랑 색 일치
       final Color color = quote.changeAmount > 0
           ? upColor
           : quote.changeAmount < 0
@@ -366,7 +368,7 @@ class _CandleChartPainter extends CustomPainter {
   }
 }
 
-// 기간 탭. 선택 상태는 상위(_StockDetailScreenState)가 들고 있음 -> 탭이 바뀌면 일별 시세를 그 기간만큼 다시 조회해야 해서
+// 기간 탭. 선택 상태는 상위(_StockDetailScreenState)가 들고 있음 -> 탭 바뀌면 일별 시세를 그 기간만큼 다시 조회해야 함
 enum _Period { oneMonth, threeMonths, sixMonths, oneYear }
 
 const Map<_Period, String> _periodLabels = <_Period, String>{
