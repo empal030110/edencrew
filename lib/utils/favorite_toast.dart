@@ -21,7 +21,7 @@ void showFavoriteToast(BuildContext context, {required bool isFavorite}) {
         dimens.space3,
       ),
       padding: EdgeInsets.symmetric(
-        vertical: 14, // 토큰에 없는 값이라 리터럴
+        vertical: 14,
         horizontal: dimens.space4,
       ),
       shape: RoundedRectangleBorder(
@@ -36,7 +36,7 @@ void showFavoriteToast(BuildContext context, {required bool isFavorite}) {
         children: <Widget>[
           Icon(
             isFavorite ? Icons.star : Icons.star_border,
-            size: 18, // 토큰에 없는 값이라 리터럴
+            size: 18,
             color: isFavorite ? colors.favoriteActive : colors.textSecondary,
           ),
           SizedBox(width: dimens.space2),

@@ -111,7 +111,6 @@ class _SearchBarState extends State<_SearchBar> {
         left: dimens.space4,
       ),
       child: Container(
-        // x축 10px은 토큰에 없는 값이라 리터럴
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: dimens.space3),
         decoration: BoxDecoration(
           color: colors.surfaceSunken,
@@ -305,7 +304,7 @@ class _SearchNoResultsState extends StatelessWidget {
         children: <Widget>[
           Image.asset(
             'assets/icons/ico_search_empty.png',
-            width: 40, // 재사용 안 하는 값 -> 리터럴
+            width: 40,
             height: 40,
             color: colors.textTertiary,
             colorBlendMode: BlendMode.srcIn,
@@ -354,7 +353,7 @@ class _SearchEmptyState extends StatelessWidget {
         children: <Widget>[
           Icon(
             Icons.search,
-            size: 40, // 재사용되는 값이 아니라 토큰으로 안 빼고 리터럴로 둠
+            size: 40,
             color: colors.textTertiary,
           ),
           SizedBox(height: dimens.space3),

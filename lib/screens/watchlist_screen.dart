@@ -235,12 +235,12 @@ class _SortSheet extends StatelessWidget {
     final AppDimens dimens = context.dimens;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 34), // 토큰에 없는 값
+      padding: const EdgeInsets.only(bottom: 34),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 21, horizontal: dimens.space6), // 토큰에 없는 값
+            padding: EdgeInsets.symmetric(vertical: 21, horizontal: dimens.space6),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -288,7 +288,7 @@ class _SortOptionRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 18, horizontal: dimens.space6), // 토큰에 없는 값
+        padding: EdgeInsets.symmetric(vertical: 18, horizontal: dimens.space6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -510,7 +510,7 @@ class _WatchlistEmptyState extends StatelessWidget {
         children: <Widget>[
           Icon(
             Icons.star_border,
-            size: 40, // 재사용되는 값이 아니라 토큰으로 안 빼고 리터럴로 둠
+            size: 40,
             color: colors.textTertiary,
           ),
           SizedBox(height: dimens.space3),

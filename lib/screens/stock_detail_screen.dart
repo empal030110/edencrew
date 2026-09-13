@@ -122,7 +122,7 @@ class _DetailHeader extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        vertical: 10, // 토큰에 없는 값
+        vertical: 10,
         horizontal: dimens.space4,
       ),
       decoration: BoxDecoration(
@@ -231,7 +231,7 @@ class _PriceSection extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(
-        top: 14, // 토큰에 없는 값
+        top: 14,
         left: dimens.space4,
         right: dimens.space4,
         bottom: dimens.space4,
@@ -283,7 +283,7 @@ class _CandleChart extends StatelessWidget {
         horizontal: dimens.space4,
       ),
       child: SizedBox(
-        height: 220, // 차트 높이, 토큰에 없는 값이라 리터럴
+        height: 220,
         width: double.infinity,
         child: CustomPaint(
           painter: _CandleChartPainter(
@@ -510,7 +510,7 @@ class _StatCard extends StatelessWidget {
     final AppDimens dimens = context.dimens;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10), // 토큰에 없는 값
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
       decoration: BoxDecoration(
         color: colors.surfaceSunken,
         borderRadius: BorderRadius.circular(dimens.radiusMd),
