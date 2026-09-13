@@ -1,5 +1,6 @@
 // 실시간 시세 API 응답을 그대로 옮긴 DTO
 // 응답 구조: result.areas[].datas[] 안에 종목별 시세가 들어있음
+// cd=symbol, nv=현재가, pcv=전일종가, ov=시가, hv=고가, lv=저가, aq=누적거래량
 
 class RealtimeQuoteResponseDto {
   const RealtimeQuoteResponseDto({required this.items});

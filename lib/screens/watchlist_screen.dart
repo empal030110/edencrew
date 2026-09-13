@@ -68,13 +68,13 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   Future<void> _loadMetadata(List<String> symbols) async {
     final Map<String, StockSearchResult> metadata = await _metadataRepository.fetchAll(symbols);
-    if (!mounted) return;
+    if (!mounted) return; // await 중에 화면 나갔으면 무시
     setState(() => _metadata = metadata);
   }
 
   Future<void> _loadQuotes(List<String> symbols) async {
     final Map<String, StockQuote> quotes = await _quoteRepository.fetch(symbols);
-    if (!mounted) return;
+    if (!mounted) return; // await 중에 화면 나갔으면 무시
     setState(() => _quotes = quotes);
   }
 
@@ -84,7 +84,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     if (symbols.isEmpty) return;
     setState(() {
       _metadata = const <String, StockSearchResult>{};
-      _quotes = const <String, StockQuote>{};
+      _quotes = const <String, StockQuote>{}; // 비워야 재조회 끝날 때까지 스켈레톤이 다시 보임
     });
     _loadMetadata(symbols);
     _loadQuotes(symbols);
@@ -149,8 +149,8 @@ class _WatchlistHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColors colors = context.colors; // 화면에서 쓸 색상 토큰 묶음
-    final AppDimens dimens = context.dimens; // 간격/크기 토큰 묶음
+    final AppColors colors = context.colors;
+    final AppDimens dimens = context.dimens;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -363,7 +363,7 @@ class _WatchlistRow extends StatelessWidget {
     final String name = metadata?.name ?? symbol; // 메타데이터 오기 전엔 심볼로 대신 표시
     final String market = metadata?.market ?? '-';
 
-    final StockQuote? quote = this.quote;
+    final StockQuote? quote = this.quote; // public 필드라 promotion 안 됨 -> 로컬 변수로 복사해서 null 체크 후 바로 씀
     final Color? changeColor = quote == null
         ? null
         : quote.changeAmount > 0
