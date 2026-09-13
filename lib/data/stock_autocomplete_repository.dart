@@ -26,8 +26,8 @@ class StockAutocompleteRepository {
   }
 }
 
-// 파싱(DTO 변환) + 필터링 + 모델 변환을 네트워크 호출과 분리한 순수 함수.
-// 네트워크 없이도 테스트할 수 있게 여기로 뺌 (test/data/stock_autocomplete_repository_test.dart 참고)
+// 파싱 + 필터링 + 모델 변환을 네트워크 호출과 분리한 순수 함수
+// -> 네트워크 없이 테스트 가능 (test/data/stock_autocomplete_repository_test.dart 참고)
 List<StockSearchResult> parseAutocompleteResults(Map<String, dynamic> json) {
   // 3. DTO 작성 - API 응답 그대로 옮기는 단계는 autocomplete_dto.dart에 분리해둠
   final AutocompleteResponseDto dto = AutocompleteResponseDto.fromJson(json);

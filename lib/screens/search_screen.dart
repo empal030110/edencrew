@@ -53,6 +53,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
+// 검색어 입력 + 자동완성 호출만 담당, 결과 상태는 안 들고 있음
+// -> 검색 결과는 onResultsChanged로 SearchScreen에 올려보냄
 class _SearchBar extends StatefulWidget {
   const _SearchBar({required this.onResultsChanged});
 
@@ -79,7 +81,7 @@ class _SearchBarState extends State<_SearchBar> {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () async {
       final List<StockSearchResult> results = await _repository.search(query);
-      if (!mounted) return;
+      if (!mounted) return; // await 중에 화면 나갔으면 무시
       widget.onResultsChanged(query, results);
     });
   }
@@ -186,7 +188,7 @@ class _SearchResultList extends StatelessWidget {
   }
 }
 
-// 검색 목록
+// 검색 결과 한 줄, 탭하면 상세로 이동 + 별 누르면 관심 토글
 class _SearchResultRow extends StatelessWidget {
   const _SearchResultRow({
     required this.query,

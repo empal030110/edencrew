@@ -7,7 +7,7 @@ class StockSearchResult {
     required this.market,
   });
 
-  /// domestic:{symbol} 형태의 canonical id. 나중에 관심종목 저장/조회 키로 씀.
+  /// domestic:{symbol} 형태의 canonical id -> 관심종목 저장/조회 키로 씀
   final String id;
 
   /// 6자리 종목코드 (예: 005930)
